@@ -1,0 +1,28 @@
+C:\Users\Администратор\Desktop\Маркетплейс стартапов\startup_platform\
+├── accounts\
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── forms.py
+│   ├── migrations\
+│   │   └── __init__.py
+│   ├── models.py
+│   ├── templates\
+│   │   └── accounts\
+│   │       ├── home.html
+│   │       ├── login.html
+│   │       └── register.html
+│   ├── tests.py
+│   ├── urls.py
+│   └── views.py
+├── marketplace\
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── static\
+│   └── accounts\
+│       └── images\
+│           └── logo.png  (предполагаю, что ты добавил логотип)
+├── manage.py
+└── (другие файлы, которые могут быть, например, db.sqlite3 или show_project_structure.py)

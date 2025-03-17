@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Главная страница{% endblock %}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+        .logo {
+            width: 100px;
+            height: 100px;
+        }
+        .nav-menu {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .nav-menu a {
+            text-decoration: none;
+            color: #000;
+            padding: 5px 10px;
+            border: 1px solid #000;
+            border-radius: 5px;
+        }
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .content {
+            padding: 20px;
+        }
+
+        .startup-button {
+            background-color: yellow;
+            color: black;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .startup-button:hover {
+            background-color: #ffcc00; /* Легкое затемнение при наведении */
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{% static 'accounts/images/logo.png' %}" alt="Логотип" class="logo">
+        <div class="nav-menu">
+            <a href="{% url 'home' %}">Главная</a>
+            <a href="{% url 'startups_list' %}">Стартапы</a>
+            <a href="{% url 'investments' %}">Инвестиции</a>
+            <a href="{% url 'news' %}">Новости</a>
+            <a href="{% url 'legal' %}">Юридическая информация</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'profile' %}">Личный кабинет</a>
+                <a href="{% url 'create_startup' %}" class="startup-button">Создать стартап</a>
+                {% if user.role.role_name == 'moderator' %}
+                    <a href="{% url 'moderator_dashboard' %}">Панель модератора</a>
+                {% endif %}
+                <a href="{% url 'logout' %}">Выход</a>
+                {% if user.profile_picture_url %}
+                    <img src="{% static user.profile_picture_url %}" alt="Аватар" class="avatar">
+                {% else %}
+                    <div class="avatar" style="background-color: #ccc;"></div>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'login' %}">Вход</a>
+                <a href="{% url 'register' %}">Регистрация</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

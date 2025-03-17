@@ -1,0 +1,475 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block title %}Создание стартапа{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'accounts/css/startup_form.css' %}">
+<!-- Подключение Dropzone.js -->
+<script src="https://unpkg.com/dropzone@5.9.3/dist/min/dropzone.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/dropzone@5.9.3/dist/min/dropzone.min.css" />
+
+<div class="startup-form-container">
+    <div class="form-header">
+        <h2>Создание стартапа</h2>
+    </div>
+    
+    <form method="post" enctype="multipart/form-data" id="startupForm">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <div class="form-column">
+                <!-- Блок названия стартапа -->
+                <div class="form-group">
+                    <label for="id_title">Название стартапа *</label>
+                    {{ form.title|add_class:"form-control" }}
+                    {% if form.title.errors %}
+                        <span class="error-message">{{ form.title.errors|first }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Блок планеты с логотипом -->
+                <div class="planet-container">
+                    <div class="planet">
+                        <div class="planet-segment segment-top" id="segment-top"></div>
+                        <div class="planet-segment segment-middle" id="segment-middle"></div>
+                        <div class="planet-segment segment-bottom" id="segment-bottom"></div>
+                    </div>
+                    <div class="logo-overlay">
+                        <img src="" alt="Логотип" class="logo-preview" id="logoPreview">
+                    </div>
+                </div>
+                
+                <!-- Блок выбора цветов планеты -->
+                <div class="color-picker-container">
+                    <div class="form-group">
+                        <label for="id_planet_top_color">Цвет верха планеты *</label>
+                        {{ form.planet_top_color|add_class:"color-picker"|attr:"data-segment=segment-top" }}
+                        {% if form.planet_top_color.errors %}
+                            <span class="error-message">{{ form.planet_top_color.errors|first }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_planet_middle_color">Цвет середины планеты *</label>
+                        {{ form.planet_middle_color|add_class:"color-picker"|attr:"data-segment=segment-middle" }}
+                        {% if form.planet_middle_color.errors %}
+                            <span class="error-message">{{ form.planet_middle_color.errors|first }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_planet_bottom_color">Цвет низа планеты *</label>
+                        {{ form.planet_bottom_color|add_class:"color-picker"|attr:"data-segment=segment-bottom" }}
+                        {% if form.planet_bottom_color.errors %}
+                            <span class="error-message">{{ form.planet_bottom_color.errors|first }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Блок загрузки логотипа -->
+                <div class="form-group">
+                    <label for="id_logo">Загрузить логотип</label>
+                    {{ form.logo }}
+                    {% if form.logo.errors %}
+                        <span class="error-message">{{ form.logo.errors|first }}</span>
+                    {% endif %}
+                </div>
+                
+                <div class="small-text" style="text-align: center;">Нажмите на планету</div>
+            </div>
+            
+            <div class="form-column">
+                <!-- Блок выбора режима -->
+                <div class="mode-buttons">
+                    <button type="button" id="only_buy_btn" class="mode-button" onclick="selectMode('only_buy')">ВЫКУП</button>
+                    <button type="button" id="only_invest_btn" class="mode-button" onclick="selectMode('only_invest')">ИНВЕСТ</button>
+                    <button type="button" id="both_mode_btn" class="mode-button" onclick="selectMode('both_mode')">ВЫКУП + ИНВЕСТ</button>
+                </div>
+                
+                <!-- Блок цели сбора средств -->
+                <div class="form-group">
+                    <label for="id_funding_goal">Цель финансирования *</label>
+                    {{ form.funding_goal|add_class:"form-control" }}
+                    {% if form.funding_goal.errors %}
+                        <span class="error-message">{{ form.funding_goal.errors|first }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Блок описания -->
+                <div class="form-group">
+                    <label for="id_description">Описание *</label>
+                    {{ form.description|add_class:"form-control" }}
+                    {% if form.description.errors %}
+                        <span class="error-message">{{ form.description.errors|first }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Блок направления -->
+                <div class="form-group">
+                    <label for="id_direction">Направление *</label>
+                    {{ form.direction|add_class:"form-control" }}
+                    {% if form.direction.errors %}
+                        <span class="error-message">{{ form.direction.errors|first }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Блок стадии -->
+                <div class="form-group">
+                    <label for="id_stage">Стадия *</label>
+                    {{ form.stage|add_class:"form-control" }}
+                    {% if form.stage.errors %}
+                        <span class="error-message">{{ form.stage.errors|first }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Блок загрузки креативов с Dropzone -->
+                <div class="upload-section">
+                    <div class="upload-title">Креативы</div>
+                    <div id="creatives-dropzone" class="dropzone"></div>
+                    <div class="small-text">Допустимые форматы: JPG, PNG, GIF, MP4, MOV</div>
+                    {% if form.creatives.errors %}
+                        <span class="error-message">{{ form.creatives.errors|first }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Блок таймлайна -->
+        <div class="timeline" id="timeline">
+            <div class="timeline-step" onclick="selectStep(1)">
+                <div class="step-number" id="step1">1</div>
+                <div class="step-text">Создание стартапа</div>
+            </div>
+            <div class="timeline-step" onclick="selectStep(2)">
+                <div class="step-number" id="step2">2</div>
+                <div class="step-text">Сбор средств</div>
+            </div>
+            <div class="timeline-step" onclick="selectStep(3)">
+                <div class="step-number" id="step3">3</div>
+                <div class="step-text">Развитие проекта</div>
+            </div>
+            <div class="timeline-step" onclick="selectStep(4)">
+                <div class="step-number" id="step4">4</div>
+                <div class="step-text">Запуск</div>
+            </div>
+            <div class="timeline-step" onclick="selectStep(5)">
+                <div class="step-number" id="step5">5</div>
+                <div class="step-text">Успешное закрытие</div>
+            </div>
+        </div>
+        
+        <!-- Блоки описания этапов -->
+        <div id="step-descriptions">
+            <div class="timeline-description-container" id="step-description-1">
+                <div class="timeline-description-header">
+                    <div class="timeline-description-title">Этап 1: Создание стартапа</div>
+                    <button type="button" class="btn-select-current" onclick="setCurrentStep(1)">Мы здесь</button>
+                </div>
+                <textarea class="timeline-description-textarea" name="step_description_1" placeholder="Добавьте описание для этого этапа..." required></textarea>
+                {% if step_description_1.errors %}
+                    <span class="error-message">{{ step_description_1.errors|first }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="timeline-description-container" id="step-description-2">
+                <div class="timeline-description-header">
+                    <div class="timeline-description-title">Этап 2: Сбор средств</div>
+                    <button type="button" class="btn-select-current" onclick="setCurrentStep(2)">Мы здесь</button>
+                </div>
+                <textarea class="timeline-description-textarea" name="step_description_2" placeholder="Добавьте описание для этого этапа..." required></textarea>
+                {% if step_description_2.errors %}
+                    <span class="error-message">{{ step_description_2.errors|first }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="timeline-description-container" id="step-description-3">
+                <div class="timeline-description-header">
+                    <div class="timeline-description-title">Этап 3: Развитие проекта</div>
+                    <button type="button" class="btn-select-current" onclick="setCurrentStep(3)">Мы здесь</button>
+                </div>
+                <textarea class="timeline-description-textarea" name="step_description_3" placeholder="Добавьте описание для этого этапа..." required></textarea>
+                {% if step_description_3.errors %}
+                    <span class="error-message">{{ step_description_3.errors|first }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="timeline-description-container" id="step-description-4">
+                <div class="timeline-description-header">
+                    <div class="timeline-description-title">Этап 4: Запуск</div>
+                    <button type="button" class="btn-select-current" onclick="setCurrentStep(4)">Мы здесь</button>
+                </div>
+                <textarea class="timeline-description-textarea" name="step_description_4" placeholder="Добавьте описание для этого этапа..." required></textarea>
+                {% if step_description_4.errors %}
+                    <span class="error-message">{{ step_description_4.errors|first }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="timeline-description-container" id="step-description-5">
+                <div class="timeline-description-header">
+                    <div class="timeline-description-title">Этап 5: Успешное закрытие</div>
+                    <button type="button" class="btn-select-current" onclick="setCurrentStep(5)">Мы здесь</button>
+                </div>
+                <textarea class="timeline-description-textarea" name="step_description_5" placeholder="Добавьте описание для этого этапа..." required></textarea>
+                {% if step_description_5.errors %}
+                    <span class="error-message">{{ step_description_5.errors|first }}</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Блок финансовых показателей -->
+        <div class="financial-section">
+            <h3>Финансовые показатели</h3>
+            
+            <!-- Блок загрузки пруфов с Dropzone -->
+            <div class="upload-section">
+                <div class="upload-title">Пруфы</div>
+                <div id="proofs-dropzone" class="dropzone"></div>
+                <div class="small-text">Допустимые форматы: PDF, DOC, DOCX, XLS, XLSX, TXT</div>
+                {% if form.proofs.errors %}
+                    <span class="error-message">{{ form.proofs.errors|first }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="checkbox-option">
+                <label for="id_micro_investment_available">
+                    {{ form.micro_investment_available }}
+                    <span style="color: #4CAF50; font-weight: bold">Включить возможность инвестиций разных инвесторов</span>
+                </label>
+            </div>
+        </div>
+        
+        <!-- Скрытые поля для режима -->
+        <input type="hidden" name="only_invest" id="id_only_invest" value="false">
+        <input type="hidden" name="only_buy" id="id_only_buy" value="false">
+        <input type="hidden" name="both_mode" id="id_both_mode" value="false">
+        
+        <!-- Скрытое поле для текущего этапа -->
+        <input type="hidden" name="current_step" id="current_step" value="1">
+        
+        <!-- Согласия -->
+        <div class="agreement-section">
+            <h3>Согласия и настройки</h3>
+            <div class="form-group">
+                <label>{{ form.agree_rules }} Согласен с правилами *</label>
+                {% if form.agree_rules.errors %}
+                    <span class="error-message">{{ form.agree_rules.errors|first }}</span>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label>{{ form.agree_data_processing }} Согласен с обработкой данных *</label>
+                {% if form.agree_data_processing.errors %}
+                    <span class="error-message">{{ form.agree_data_processing.errors|first }}</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <button type="submit" class="submit-button">Отправить на модерацию</button>
+    </form>
+</div>
+
+<style>
+    /* Добавляем стили для таймлайна */
+    .timeline-step {
+        cursor: pointer;
+    }
+    .step-number {
+        width: 30px;
+        height: 30px;
+        background-color: #ccc;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+    .step-number.active {
+        background-color: #16a34a; /* Зеленый цвет для активных этапов */
+    }
+    .timeline-description-container {
+        display: none;
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+    }
+    .timeline-description-container.active {
+        display: block;
+    }
+    .btn-select-current {
+        background-color: #16a34a;
+        color: white;
+        padding: 5px 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+</style>
+
+<script>
+    // Отключаем автодискавери Dropzone
+    Dropzone.autoDiscover = false;
+
+    // Хранилище для временных путей
+    let tempCreatives = [];
+    let tempProofs = [];
+
+    // Функция выбора режима
+    function selectMode(selectedMode) {
+        document.getElementById('only_invest_btn').classList.remove('selected');
+        document.getElementById('only_buy_btn').classList.remove('selected');
+        document.getElementById('both_mode_btn').classList.remove('selected');
+        
+        document.getElementById('id_only_invest').value = 'false';
+        document.getElementById('id_only_buy').value = 'false';
+        document.getElementById('id_both_mode').value = 'false';
+        
+        document.getElementById(selectedMode + '_btn').classList.add('selected');
+        document.getElementById('id_' + selectedMode).value = 'true';
+    }
+    
+    // Обновление цвета сегментов планеты
+    document.querySelectorAll('.color-picker').forEach(picker => {
+        picker.addEventListener('input', function() {
+            const segmentId = this.getAttribute('data-segment');
+            document.getElementById(segmentId).style.backgroundColor = this.value;
+        });
+    });
+    
+    // Предпросмотр логотипа
+    document.getElementById('id_logo').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('logoPreview').src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Функция для выбора этапа и отображения описания
+    function selectStep(stepNumber) {
+        document.querySelectorAll('.timeline-description-container').forEach(container => {
+            container.classList.remove('active');
+        });
+        document.getElementById(`step-description-${stepNumber}`).classList.add('active');
+    }
+    
+    // Функция для установки текущего этапа
+    function setCurrentStep(stepNumber) {
+        document.getElementById('current_step').value = stepNumber;
+        for (let i = 1; i <= 5; i++) {
+            const stepElement = document.getElementById(`step${i}`);
+            if (i <= stepNumber) {
+                stepElement.classList.add('active');
+            } else {
+                stepElement.classList.remove('active');
+            }
+        }
+    }
+    
+    // Инициализация Dropzone для креативов
+    const creativesDropzone = new Dropzone("#creatives-dropzone", {
+        url: "{% url 'upload_temp_file' %}",
+        paramName: function() { return "creatives"; }, // Указываем имя для файлов
+        maxFilesize: 10, // Максимальный размер файла в МБ
+        acceptedFiles: "image/*,video/*",
+        autoProcessQueue: true,  // Автоматическая загрузка во временное хранилище
+        uploadMultiple: true,
+        addRemoveLinks: true,
+        init: function() {
+            this.on("addedfile", function(file) {
+                console.log("Добавлен креатив:", file.name);
+            });
+            this.on("sending", function(file, xhr, formData) {
+                console.log("Отправка креатива:", file.name);
+                formData.append("file_type", "creatives");
+                formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+            });
+            this.on("successmultiple", function(files, response) {
+                console.log("Креативы загружены во временное хранилище:", response);
+                if (response.files) {
+                    tempCreatives = response.files;
+                }
+            });
+            this.on("error", function(file, response) {
+                console.error("Ошибка загрузки креативов:", response);
+                alert("Ошибка загрузки креативов: " + (response.error || 'Неизвестная ошибка'));
+            });
+            this.on("removedfile", function(file) {
+                tempCreatives = tempCreatives.filter(path => !path.includes(file.name));
+            });
+        }
+    });
+
+    // Инициализация Dropzone для пруфов
+    const proofsDropzone = new Dropzone("#proofs-dropzone", {
+        url: "{% url 'upload_temp_file' %}",
+        paramName: function() { return "proofs"; }, // Указываем имя для файлов
+        maxFilesize: 10,
+        acceptedFiles: ".pdf,.doc,.docx,.xls,.xlsx,.txt",
+        autoProcessQueue: true,  // Автоматическая загрузка во временное хранилище
+        uploadMultiple: true,
+        addRemoveLinks: true,
+        init: function() {
+            this.on("addedfile", function(file) {
+                console.log("Добавлен пруф:", file.name);
+            });
+            this.on("sending", function(file, xhr, formData) {
+                console.log("Отправка пруфа:", file.name);
+                formData.append("file_type", "proofs");
+                formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+            });
+            this.on("successmultiple", function(files, response) {
+                console.log("Пруфы загружены во временное хранилище:", response);
+                if (response.files) {
+                    tempProofs = response.files;
+                }
+            });
+            this.on("error", function(file, response) {
+                console.error("Ошибка загрузки пруфов:", response);
+                alert("Ошибка загрузки пруфов: " + (response.error || 'Неизвестная ошибка'));
+            });
+            this.on("removedfile", function(file) {
+                tempProofs = tempProofs.filter(path => !path.includes(file.name));
+            });
+        }
+    });
+
+    // Обработка отправки формы
+    document.getElementById('startupForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const submitButton = this.querySelector('button[type="submit"]');
+        if (submitButton.disabled) return; // Предотвращаем повторное нажатие
+
+        submitButton.disabled = true;  // Блокировка кнопки
+        submitButton.textContent = 'Отправка...';
+
+        const formData = new FormData(this);
+        formData.append('temp_creatives', JSON.stringify(tempCreatives));
+        formData.append('temp_proofs', JSON.stringify(tempProofs));
+
+        fetch("{% url 'create_startup' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': "{{ csrf_token }}"
+            }
+        }).then(response => response.text())
+          .then(html => {
+              window.location.href = "{% url 'profile' %}";
+          }).catch(error => {
+              console.error("Ошибка отправки формы:", error);
+              submitButton.disabled = false;
+              submitButton.textContent = 'Отправить на модерацию';
+              alert("Ошибка при создании стартапа");
+          });
+    });
+
+    // Инициализация по умолчанию
+    window.addEventListener('DOMContentLoaded', function() {
+        selectMode('only_invest');
+        selectStep(1);
+        setCurrentStep(1);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,240 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Панель модератора{% endblock %}
+
+{% block content %}
+    <!-- Встроенные стили -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .mb-6 {
+            margin-bottom: 24px;
+        }
+        .mb-4 {
+            margin-bottom: 16px;
+        }
+        .text-3xl {
+            font-size: 2rem;
+        }
+        .font-bold {
+            font-weight: bold;
+        }
+        .text-gray-800 {
+            color: #1a202c;
+        }
+        .text-gray-600 {
+            color: #4a5568;
+        }
+        .text-gray-700 {
+            color: #2d3748;
+        }
+        .text-lg {
+            font-size: 1.125rem;
+        }
+        .space-y-8 > li {
+            margin-bottom: 32px;
+        }
+        .startup-card {
+            background: linear-gradient(to right, #e6f0fa, #ebedff);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .startup-card:hover {
+            transform: scale(1.05);
+        }
+        .startup-card-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+        .startup-logo {
+            flex-shrink: 0;
+        }
+        .startup-logo img, .startup-logo-placeholder {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        .startup-logo-placeholder {
+            background-color: #e2e8f0;
+        }
+        .startup-info {
+            flex: 1;
+        }
+        .startup-details {
+            flex: 1;
+        }
+        .startup-details h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+        .startup-details p {
+            color: #4a5568;
+            margin-bottom: 4px;
+        }
+        .startup-meta {
+            display: flex;
+            gap: 16px;
+            color: #2d3748;
+        }
+        .startup-meta p {
+            margin: 0;
+        }
+        .startup-button a {
+            background-color: #2563eb;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .startup-button a:hover {
+            background-color: #1d4ed8;
+        }
+        .mt-4 {
+            margin-top: 16px;
+        }
+        .block {
+            display: block;
+        }
+        .font-semibold {
+            font-weight: 600;
+        }
+        .w-full {
+            width: 100%;
+        }
+        .p-2 {
+            padding: 8px;
+        }
+        .border {
+            border: 1px solid #e2e8f0;
+        }
+        .rounded-lg {
+            border-radius: 8px;
+        }
+        .bg-green-600 {
+            background-color: #16a34a;
+        }
+        .bg-green-600:hover {
+            background-color: #15803d;
+        }
+        .bg-red-600 {
+            background-color: #dc2626;
+        }
+        .bg-red-600:hover {
+            background-color: #b91c1c;
+        }
+        .text-white {
+            color: white;
+        }
+        .px-4 {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+        .py-2 {
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+        .transition {
+            transition: all 0.3s ease;
+        }
+        .flex {
+            display: flex;
+        }
+        .gap-4 {
+            gap: 16px;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status-approved {
+            background-color: #16a34a;
+            color: white;
+        }
+        .status-rejected {
+            background-color: #dc2626;
+            color: white;
+        }
+        .status-pending {
+            background-color: #d97706;
+            color: white;
+        }
+    </style>
+
+    <h1 class="text-center mb-6 text-3xl font-bold text-gray-800">Заявки на рассмотрение</h1>
+    {% if pending_startups %}
+        <div class="container">
+            <ul class="space-y-8">
+                {% for startup in pending_startups %}
+                    <li class="startup-card">
+                        <div class="startup-card-content">
+                            <!-- Логотип -->
+                            <div class="startup-logo">
+                                {% if startup.planet_logo %}
+                                    <img src="{{ startup.planet_logo.url }}" alt="{{ startup.title }} логотип">
+                                {% else %}
+                                    <div class="startup-logo-placeholder"></div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Информация о стартапе -->
+                            <div class="startup-info">
+                                <div class="startup-details">
+                                    <h2>{{ startup.title }}</h2>
+                                    <div class="status {% if startup.status == 'approved' %}status-approved{% elif startup.status == 'rejected' %}status-rejected{% else %}status-pending{% endif %}">
+                                        {% if startup.status == 'approved' %}Одобрен
+                                        {% elif startup.status == 'rejected' %}Отклонён
+                                        {% else %}На рассмотрении{% endif %}
+                                    </div>
+                                </div>
+                                <div class="startup-meta">
+                                    <p><strong>Направление:</strong> {{ startup.direction.direction_name }}</p>
+                                    <p><strong>Цель:</strong> {{ startup.funding_goal }} USD</p>
+                                </div>
+                            </div>
+
+                            <!-- Кнопка "Подробнее" -->
+                            <div class="startup-button">
+                                <a href="{% url 'startup_detail' startup.startup_id %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">Подробнее</a>
+                            </div>
+                        </div>
+
+                        <!-- Форма для комментария и действий -->
+                        <div class="mt-4">
+                            <form method="post" action="{% url 'approve_startup' startup.startup_id %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300">Одобрить</button>
+                            </form>
+                            <form method="post" action="{% url 'reject_startup' startup.startup_id %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300 ml-4">Отклонить</button>
+                            </form>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% else %}
+        <p class="text-center text-gray-600 text-lg">Нет заявок на рассмотрение.</p>
+    {% endif %}
+{% endblock %}
