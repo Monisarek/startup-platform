@@ -43,7 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Для обработки статических файлов на render.com
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Для статических файлов
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -113,13 +113,14 @@ DEFAULT_CHARSET = 'utf-8'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]  # Папка для статических файлов приложения
+# Статические файлы
+STATIC_URL = '/static/'  # URL для доступа к статическим файлам
+STATICFILES_DIRS = [BASE_DIR / "static"]  # Папка, где лежат исходные CSS, JS, изображения
 STATIC_ROOT = BASE_DIR / "staticfiles"    # Папка для собранных статических файлов
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  # Для оптимизации статических файлов
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files (для загрузки файлов, таких как логотипы, креативы и пруфы)
-MEDIA_URL = '/media/'
+# Медиафайлы
+MEDIA_URL = '/media/'  # URL для доступа к медиафайлам
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
