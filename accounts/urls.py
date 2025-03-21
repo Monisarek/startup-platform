@@ -20,5 +20,4 @@ urlpatterns = [
     path('moderator/reject/<int:startup_id>/', views.reject_startup, name='reject_startup'),
     path('vote/<int:startup_id>/', views.vote_startup, name='vote_startup'),
     path('startup/<int:startup_id>/edit/', views.edit_startup, name='edit_startup'),
-    path('upload_temp_file/', views.upload_temp_file, name='upload_temp_file'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
