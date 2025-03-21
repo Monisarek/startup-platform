@@ -27,13 +27,25 @@ class ActivityLog(models.Model):
 
 
 def logo_upload_path(instance, filename):
-    return f'startups/{instance.startup_id}/logos/{filename}'
+    # Получаем расширение файла
+    ext = os.path.splitext(filename)[1]
+    # Укорачиваем имя файла до 50 символов
+    base_name = slugify(os.path.splitext(filename)[0])[:50]
+    # Формируем новое имя файла
+    new_filename = f"logo_{instance.startup_id}{ext}"
+    return f'startups/{instance.startup_id}/logos/{new_filename}'
 
 def creative_upload_path(instance, filename):
-    return f'startups/{instance.entity_id}/creatives/{filename}'
+    ext = os.path.splitext(filename)[1]
+    base_name = slugify(os.path.splitext(filename)[0])[:50]
+    new_filename = f"creative_{instance.entity_id}_{base_name}{ext}"
+    return f'startups/{instance.entity_id}/creatives/{new_filename}'
 
 def proof_upload_path(instance, filename):
-    return f'startups/{instance.entity_id}/proofs/{filename}'
+    ext = os.path.splitext(filename)[1]
+    base_name = slugify(os.path.splitext(filename)[0])[:50]
+    new_filename = f"proof_{instance.entity_id}_{base_name}{ext}"
+    return f'startups/{instance.entity_id}/proofs/{new_filename}'
 
 class ChatConversations(models.Model):
     conversation_id = models.AutoField(primary_key=True)
