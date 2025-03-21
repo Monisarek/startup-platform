@@ -4,9 +4,6 @@
 {% block title %}Создание стартапа{% endblock %}
 {% block content %}
 <link rel="stylesheet" href="{% static 'accounts/css/startup_form.css' %}">
-<!-- Подключение Dropzone.js -->
-<script src="https://unpkg.com/dropzone@5.9.3/dist/min/dropzone.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/dropzone@5.9.3/dist/min/dropzone.min.css" />
 
 <div class="startup-form-container">
     <div class="form-header">
@@ -120,10 +117,10 @@
                     {% endif %}
                 </div>
                 
-                <!-- Блок загрузки креативов с Dropzone -->
+                <!-- Блок загрузки креативов -->
                 <div class="upload-section">
                     <div class="upload-title">Креативы</div>
-                    <div id="creatives-dropzone" class="dropzone"></div>
+                    <input type="file" name="creatives" multiple accept="image/*,video/*">
                     <div class="small-text">Допустимые форматы: JPG, PNG, GIF, MP4, MOV</div>
                     {% if form.creatives.errors %}
                         <span class="error-message">{{ form.creatives.errors|first }}</span>
@@ -218,10 +215,10 @@
         <div class="financial-section">
             <h3>Финансовые показатели</h3>
             
-            <!-- Блок загрузки пруфов с Dropzone -->
+            <!-- Блок загрузки пруфов -->
             <div class="upload-section">
                 <div class="upload-title">Пруфы</div>
-                <div id="proofs-dropzone" class="dropzone"></div>
+                <input type="file" name="proofs" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt">
                 <div class="small-text">Допустимые форматы: PDF, DOC, DOCX, XLS, XLSX, TXT</div>
                 {% if form.proofs.errors %}
                     <span class="error-message">{{ form.proofs.errors|first }}</span>
@@ -305,13 +302,6 @@
 </style>
 
 <script>
-    // Отключаем автодискавери Dropzone
-    Dropzone.autoDiscover = false;
-
-    // Хранилище для временных путей
-    let tempCreatives = [];
-    let tempProofs = [];
-
     // Функция выбора режима
     function selectMode(selectedMode) {
         document.getElementById('only_invest_btn').classList.remove('selected');
@@ -366,103 +356,20 @@
             }
         }
     }
-    
-    // Инициализация Dropzone для креативов
-    const creativesDropzone = new Dropzone("#creatives-dropzone", {
-        url: "{% url 'upload_temp_file' %}",
-        paramName: function() { return "creatives"; }, // Указываем имя для файлов
-        maxFilesize: 10, // Максимальный размер файла в МБ
-        acceptedFiles: "image/*,video/*",
-        autoProcessQueue: true,  // Автоматическая загрузка во временное хранилище
-        uploadMultiple: true,
-        addRemoveLinks: true,
-        init: function() {
-            this.on("addedfile", function(file) {
-                console.log("Добавлен креатив:", file.name);
-            });
-            this.on("sending", function(file, xhr, formData) {
-                console.log("Отправка креатива:", file.name);
-                formData.append("file_type", "creatives");
-                formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
-            });
-            this.on("successmultiple", function(files, response) {
-                console.log("Креативы загружены во временное хранилище:", response);
-                if (response.files) {
-                    tempCreatives = response.files;
-                }
-            });
-            this.on("error", function(file, response) {
-                console.error("Ошибка загрузки креативов:", response);
-                alert("Ошибка загрузки креативов: " + (response.error || 'Неизвестная ошибка'));
-            });
-            this.on("removedfile", function(file) {
-                tempCreatives = tempCreatives.filter(path => !path.includes(file.name));
-            });
-        }
-    });
 
-    // Инициализация Dropzone для пруфов
-    const proofsDropzone = new Dropzone("#proofs-dropzone", {
-        url: "{% url 'upload_temp_file' %}",
-        paramName: function() { return "proofs"; }, // Указываем имя для файлов
-        maxFilesize: 10,
-        acceptedFiles: ".pdf,.doc,.docx,.xls,.xlsx,.txt",
-        autoProcessQueue: true,  // Автоматическая загрузка во временное хранилище
-        uploadMultiple: true,
-        addRemoveLinks: true,
-        init: function() {
-            this.on("addedfile", function(file) {
-                console.log("Добавлен пруф:", file.name);
-            });
-            this.on("sending", function(file, xhr, formData) {
-                console.log("Отправка пруфа:", file.name);
-                formData.append("file_type", "proofs");
-                formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
-            });
-            this.on("successmultiple", function(files, response) {
-                console.log("Пруфы загружены во временное хранилище:", response);
-                if (response.files) {
-                    tempProofs = response.files;
-                }
-            });
-            this.on("error", function(file, response) {
-                console.error("Ошибка загрузки пруфов:", response);
-                alert("Ошибка загрузки пруфов: " + (response.error || 'Неизвестная ошибка'));
-            });
-            this.on("removedfile", function(file) {
-                tempProofs = tempProofs.filter(path => !path.includes(file.name));
-            });
-        }
-    });
-
-    // Обработка отправки формы
+    // Обработка отправки формы (блокировка кнопки и уведомления)
     document.getElementById('startupForm').addEventListener('submit', function(e) {
-        e.preventDefault();
         const submitButton = this.querySelector('button[type="submit"]');
-        if (submitButton.disabled) return; // Предотвращаем повторное нажатие
+        if (submitButton.disabled) {
+            e.preventDefault(); // Предотвращаем повторную отправку
+            return;
+        }
 
-        submitButton.disabled = true;  // Блокировка кнопки
-        submitButton.textContent = 'Отправка...';
+        submitButton.disabled = true; // Блокируем кнопку
+        submitButton.textContent = 'Отправка...'; // Меняем текст кнопки
 
-        const formData = new FormData(this);
-        formData.append('temp_creatives', JSON.stringify(tempCreatives));
-        formData.append('temp_proofs', JSON.stringify(tempProofs));
-
-        fetch("{% url 'create_startup' %}", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': "{{ csrf_token }}"
-            }
-        }).then(response => response.text())
-          .then(html => {
-              window.location.href = "{% url 'profile' %}";
-          }).catch(error => {
-              console.error("Ошибка отправки формы:", error);
-              submitButton.disabled = false;
-              submitButton.textContent = 'Отправить на модерацию';
-              alert("Ошибка при создании стартапа");
-          });
+        // Здесь форма отправляется стандартным способом (не через fetch),
+        // но мы можем добавить дополнительную логику, если нужно
     });
 
     // Инициализация по умолчанию

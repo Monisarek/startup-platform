@@ -26,27 +26,14 @@ class ActivityLog(models.Model):
         db_table = 'activity_log'
 
 
-def get_upload_path(instance, filename):
-    # Определяем тип файла (логотип, креатив или пруф) на основе контекста
-    file_type = 'logos'  # По умолчанию для логотипов
-    if hasattr(instance, 'file_type') and instance.file_type.type_name == 'creative':
-        file_type = 'creatives'
-    elif hasattr(instance, 'file_type') and instance.file_type.type_name == 'proof':
-        file_type = 'proofs'
+def logo_upload_path(instance, filename):
+    return f'startups/{instance.startup_id}/logos/{filename}'
 
-    # Получаем расширение и базовое имя файла
-    ext = os.path.splitext(filename)[1]
-    base_name = os.path.basename(filename).replace(ext, '')
-    
-    # Сокращаем имя до 50 символов
-    max_name_length = 50
-    short_name = slugify(base_name)[:max_name_length]
-    
-    # Формируем новое имя с префиксом и ID
-    new_filename = f'startup_{instance.startup_id}_{short_name}{ext}'
-    
-    # Возвращаем полный путь
-    return os.path.join('startups', str(instance.startup_id), file_type, new_filename)
+def creative_upload_path(instance, filename):
+    return f'startups/{instance.entity_id}/creatives/{filename}'
+
+def proof_upload_path(instance, filename):
+    return f'startups/{instance.entity_id}/proofs/{filename}'
 
 class ChatConversations(models.Model):
     conversation_id = models.AutoField(primary_key=True)
@@ -106,7 +93,7 @@ class FileStorage(models.Model):
     file_id = models.AutoField(primary_key=True)
     entity_type = models.ForeignKey(EntityTypes, models.DO_NOTHING, blank=True, null=True)
     entity_id = models.IntegerField(blank=True, null=True)
-    file_url = models.FileField(upload_to=get_upload_path, blank=True, null=True)  # Изменено на FileField
+    file_url = models.FileField(upload_to=lambda instance, filename: creative_upload_path(instance, filename) if instance.file_type.type_name == 'creative' else proof_upload_path(instance, filename), blank=True, null=True)
     file_type = models.ForeignKey('FileTypes', models.DO_NOTHING, blank=True, null=True)
     uploaded_at = models.DateTimeField(blank=True, null=True)
 
@@ -372,7 +359,7 @@ class Startups(models.Model):
     planet_top_color = models.CharField(max_length=7, default='#FFFFFF')
     planet_middle_color = models.CharField(max_length=7, default='#FFFFFF')
     planet_bottom_color = models.CharField(max_length=7, default='#FFFFFF')
-    planet_logo = models.ImageField(upload_to=get_upload_path, null=True, blank=True)  # Исправлен upload_to
+    planet_logo = models.ImageField(upload_to=logo_upload_path, null=True, blank=True)
     status = models.CharField(max_length=20, default='pending')
     status_id = models.ForeignKey(ReviewStatuses, models.DO_NOTHING, blank=True, null=True, db_column='status_id', default=3)
     only_invest = models.BooleanField(default=False)

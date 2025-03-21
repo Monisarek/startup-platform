@@ -6,6 +6,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
 import json
+from django.http import JsonResponse
+import logging
 import os
 import shutil
 from django.conf import settings
@@ -122,37 +124,7 @@ def legal(request):
     return render(request, 'accounts/legal.html')
 
 
-from django.http import JsonResponse
 
-@login_required
-def upload_temp_file(request):
-    if request.method == 'POST':
-        file_type = request.POST.get('file_type')
-        print("file_type:", file_type)  # Логирование
-        print("request.FILES:", request.FILES)  # Логирование
-
-        if file_type == 'creatives' and 'creatives' in request.FILES:
-            files = request.FILES.getlist('creatives')
-        elif file_type == 'proofs' and 'proofs' in request.FILES:
-            files = request.FILES.getlist('proofs')
-        else:
-            print("Файлы не найдены в request.FILES")  # Логирование
-            return JsonResponse({'error': 'Файлы не найдены'}, status=400)
-
-        temp_files = []
-        for file in files:
-            temp_path = os.path.join(settings.MEDIA_ROOT, 'temp', str(request.user.id), file.name)
-            os.makedirs(os.path.dirname(temp_path), exist_ok=True)
-            with open(temp_path, 'wb+') as destination:
-                for chunk in file.chunks():
-                    destination.write(chunk)
-            temp_files.append(temp_path)
-            print(f"Сохранён временный файл: {temp_path}")  # Логирование
-        return JsonResponse({'message': 'Файлы загружены во временное хранилище', 'files': temp_files})
-    return JsonResponse({'error': 'Неверный метод'}, status=405)
-
-
-import logging
 
 # Настройка логгера
 logger = logging.getLogger(__name__)
@@ -173,34 +145,24 @@ def create_startup(request):
                 raise ValueError("Статус 'Pending' не найден в базе данных.")
             startup.save()
 
-            # Обработка временных креативов
-            temp_creatives = json.loads(request.POST.get('temp_creatives', '[]'))
-            for temp_path in temp_creatives:
-                if os.path.exists(temp_path):
-                    creative_path = f'startups/{startup.startup_id}/creatives/{os.path.basename(temp_path)}'
-                    full_path = os.path.join(settings.MEDIA_ROOT, creative_path)
-                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-                    shutil.move(temp_path, full_path)
+            # Обработка креативов
+            if 'creatives' in request.FILES:
+                for creative_file in request.FILES.getlist('creatives'):
                     FileStorage.objects.create(
                         entity_type=EntityTypes.objects.get(type_name='startup'),
                         entity_id=startup.startup_id,
-                        file_url=creative_path,
+                        file_url=creative_file,
                         file_type=FileTypes.objects.get(type_name='creative'),
                         uploaded_at=timezone.now()
                     )
 
-            # Обработка временных пруфов
-            temp_proofs = json.loads(request.POST.get('temp_proofs', '[]'))
-            for temp_path in temp_proofs:
-                if os.path.exists(temp_path):
-                    proof_path = f'startups/{startup.startup_id}/proofs/{os.path.basename(temp_path)}'
-                    full_path = os.path.join(settings.MEDIA_ROOT, proof_path)
-                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-                    shutil.move(temp_path, full_path)
+            # Обработка пруфов
+            if 'proofs' in request.FILES:
+                for proof_file in request.FILES.getlist('proofs'):
                     FileStorage.objects.create(
                         entity_type=EntityTypes.objects.get(type_name='startup'),
                         entity_id=startup.startup_id,
-                        file_url=proof_path,
+                        file_url=proof_file,
                         file_type=FileTypes.objects.get(type_name='proof'),
                         uploaded_at=timezone.now()
                     )
@@ -238,53 +200,29 @@ def edit_startup(request, startup_id):
             if 'logo' in request.FILES:
                 startup.planet_logo = request.FILES['logo']
                 startup.save(update_fields=['planet_logo'])
-                logger.debug(f"Logo saved at: {startup.planet_logo.path}")
+                logger.debug(f"Logo saved at: {startup.planet_logo.url}")
 
             if 'creatives' in request.FILES:
                 logger.debug(f"Creatives found in request.FILES: {request.FILES.getlist('creatives')}")
                 for creative_file in request.FILES.getlist('creatives'):
-                    fake_instance = FileStorage(
-                        entity_type=EntityTypes.objects.get(type_name='startup'),
-                        entity_id=startup.startup_id,
-                        file_type=FileTypes.objects.get(type_name='creative')
-                    )
-                    creative_path = get_upload_path(fake_instance, creative_file.name)
-                    full_path = os.path.join(settings.MEDIA_ROOT, creative_path)
-                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-                    with open(full_path, 'wb+') as destination:
-                        for chunk in creative_file.chunks():
-                            destination.write(chunk)
                     FileStorage.objects.create(
                         entity_type=EntityTypes.objects.get(type_name='startup'),
                         entity_id=startup.startup_id,
-                        file_url=creative_path,
+                        file_url=creative_file,
                         file_type=FileTypes.objects.get(type_name='creative'),
                         uploaded_at=timezone.now()
                     )
-                    logger.debug(f"Creative saved at: {full_path}")
 
             if 'proofs' in request.FILES:
                 logger.debug(f"Proofs found in request.FILES: {request.FILES.getlist('proofs')}")
                 for proof_file in request.FILES.getlist('proofs'):
-                    fake_instance = FileStorage(
-                        entity_type=EntityTypes.objects.get(type_name='startup'),
-                        entity_id=startup.startup_id,
-                        file_type=FileTypes.objects.get(type_name='proof')
-                    )
-                    proof_path = get_upload_path(fake_instance, proof_file.name)
-                    full_path = os.path.join(settings.MEDIA_ROOT, proof_path)
-                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-                    with open(full_path, 'wb+') as destination:
-                        for chunk in proof_file.chunks():
-                            destination.write(chunk)
                     FileStorage.objects.create(
                         entity_type=EntityTypes.objects.get(type_name='startup'),
                         entity_id=startup.startup_id,
-                        file_url=proof_path,
+                        file_url=proof_file,
                         file_type=FileTypes.objects.get(type_name='proof'),
                         uploaded_at=timezone.now()
                     )
-                    logger.debug(f"Proof saved at: {full_path}")
 
             startup.save()
             messages.success(request, f'Стартап "{startup.title}" обновлён и отправлен на модерацию.')
