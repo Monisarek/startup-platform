@@ -12,7 +12,7 @@ import os
 import shutil
 from django.conf import settings
 from .forms import RegisterForm, LoginForm, StartupForm
-from .models import Users, Startups, ReviewStatuses, UserVotes, StartupTimeline, FileStorage, EntityTypes, FileTypes, get_upload_path
+from .models import Users, Startups, ReviewStatuses, UserVotes, StartupTimeline, FileStorage, EntityTypes, FileTypes
 
 # Главная страница
 def home(request):
