@@ -2,6 +2,11 @@ import os
 from pathlib import Path
 import dj_database_url  # Для работы с DATABASE_URL от render.com
 from decouple import config
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -170,3 +175,7 @@ SECURE_HSTS_PRELOAD = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
+
+logger.info("=== Проверка настроек Django ===")
+logger.info(f"DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}")
+logger.info(f"INSTALLED_APPS: {INSTALLED_APPS}")

@@ -263,25 +263,19 @@ def create_startup(request):
     return render(request, 'accounts/create_startup.html', {'form': form})
 
 @login_required
-def edit_startup(request, startup_id):
-    logger.debug(f"Request method: {request.method}")
-    logger.debug(f"Request POST: {request.POST}")
-    logger.debug(f"Request FILES: {dict(request.FILES)}")
-    
-    startup = get_object_or_404(Startups, startup_id=startup_id)
-    if request.user != startup.owner:
-        messages.error(request, 'У вас нет прав для редактирования этого стартапа.')
-        return redirect('startup_detail', startup_id=startup_id)
-
+def create_startup(request):
     if request.method == 'POST':
-        form = StartupForm(request.POST, request.FILES, instance=startup)
+        form = StartupForm(request.POST, request.FILES)
         if form.is_valid():
             startup = form.save(commit=False)
-            startup.status = 'pending'
-            startup.is_edited = True
+            startup.owner = request.user
+            startup.created_at = timezone.now()
             startup.updated_at = timezone.now()
-            if 'current_step' in request.POST:
-                startup.current_step = int(request.POST.get('current_step'))
+            startup.status = 'pending'
+            try:
+                startup.status_id = ReviewStatuses.objects.get(status_name='Pending')
+            except ReviewStatuses.DoesNotExist:
+                raise ValueError("Статус 'Pending' не найден в базе данных.")
             startup.save()
 
             # Явное сохранение логотипа
@@ -291,7 +285,7 @@ def edit_startup(request, startup_id):
                 logger.info(f"Логотип сохранён: {startup.planet_logo.url}")
 
             # Логирование информации о файлах
-            logger.info("=== Обновление стартапа ===")
+            logger.info("=== Отправка стартапа на модерацию ===")
             logger.info(f"Стартап ID: {startup.startup_id}")
             
             # Логотип
@@ -342,17 +336,19 @@ def edit_startup(request, startup_id):
             logger.info("=== Проверка подключения к Yandex Object Storage ===")
             try:
                 from storages.backends.s3boto3 import S3Boto3Storage
+                from django.core.files.base import ContentFile
                 storage = S3Boto3Storage()
                 test_file_name = f"test/test_file_{startup.startup_id}.txt"
                 test_content = "This is a test file to check Yandex Object Storage connection."
-                storage.save(test_file_name, test_content.encode('utf-8'))
+                test_file = ContentFile(test_content.encode('utf-8'))
+                storage.save(test_file_name, test_file)
                 logger.info(f"Тестовый файл успешно сохранён: {test_file_name}")
                 test_file_url = storage.url(test_file_name)
                 logger.info(f"URL тестового файла: {test_file_url}")
                 storage.delete(test_file_name)
                 logger.info(f"Тестовый файл удалён: {test_file_name}")
             except Exception as e:
-                logger.error(f"Ошибка подключения к Yandex Object Storage: {str(e)}")
+                logger.error(f"Ошибка подключения к Yandex Object Storage: {str(e)}", exc_info=True)
 
             # Обработка креативов
             if creatives:
@@ -392,14 +388,14 @@ def edit_startup(request, startup_id):
                     file_storage.file_url.save(file_path, proof_file, save=True)
                     logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
 
-            messages.success(request, f'Стартап "{startup.title}" обновлён и отправлен на модерацию.')
-            return redirect('startup_detail', startup_id=startup_id)
+            messages.success(request, f'Стартап "{startup.title}" успешно создан и отправлен на модерацию!')
+            return redirect('profile')
         else:
-            messages.error(request, 'Форма содержит ошибки. Проверьте введенные данные.')
-            logger.error(f"Form errors: {form.errors}")
+            messages.error(request, 'Форма содержит ошибки.')
+            return render(request, 'accounts/create_startup.html', {'form': form})
     else:
-        form = StartupForm(instance=startup)
-    return render(request, 'accounts/edit_startup.html', {'form': form, 'startup': startup})
+        form = StartupForm()
+    return render(request, 'accounts/create_startup.html', {'form': form})
 
 # Исправленная панель модератора
 def moderator_dashboard(request):
