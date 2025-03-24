@@ -145,15 +145,20 @@ def create_startup(request):
                 raise ValueError("Статус 'Pending' не найден в базе данных.")
             startup.save()
 
+            # Явное сохранение логотипа
+            logo = form.cleaned_data.get('logo')
+            if logo:
+                startup.planet_logo.save(f"startups/{startup.startup_id}/logos/{logo.name}", logo, save=True)
+                logger.info(f"Логотип сохранён: {startup.planet_logo.url}")
+
             # Логирование информации о файлах
             logger.info("=== Отправка стартапа на модерацию ===")
             logger.info(f"Стартап ID: {startup.startup_id}")
             
             # Логотип
-            logo = form.cleaned_data.get('logo')
             if logo:
                 logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
-                logger.info(f"Путь сохранения логотипа: {startup.planet_logo.path if startup.planet_logo else 'Не сохранён'}")
+                logger.info(f"Путь сохранения логотипа: {startup.planet_logo.url}")
             else:
                 logger.info("Логотип не загружен")
 
@@ -187,13 +192,28 @@ def create_startup(request):
                 logger.info(f"{key}: {value}")
 
             # Логирование настроек Yandex Object Storage
-            from django.conf import settings
             logger.info("=== Настройки Yandex Object Storage ===")
             logger.info(f"AWS_ACCESS_KEY_ID: {getattr(settings, 'AWS_ACCESS_KEY_ID', 'Не задано')}")
             logger.info(f"AWS_SECRET_ACCESS_KEY: {getattr(settings, 'AWS_SECRET_ACCESS_KEY', 'Не задано')}")
             logger.info(f"AWS_STORAGE_BUCKET_NAME: {getattr(settings, 'AWS_STORAGE_BUCKET_NAME', 'Не задано')}")
             logger.info(f"AWS_S3_ENDPOINT_URL: {getattr(settings, 'AWS_S3_ENDPOINT_URL', 'Не задано')}")
             logger.info(f"AWS_DEFAULT_ACL: {getattr(settings, 'AWS_DEFAULT_ACL', 'Не задано')}")
+
+            # Проверка подключения к Yandex Object Storage
+            logger.info("=== Проверка подключения к Yandex Object Storage ===")
+            try:
+                from storages.backends.s3boto3 import S3Boto3Storage
+                storage = S3Boto3Storage()
+                test_file_name = f"test/test_file_{startup.startup_id}.txt"
+                test_content = "This is a test file to check Yandex Object Storage connection."
+                storage.save(test_file_name, test_content.encode('utf-8'))
+                logger.info(f"Тестовый файл успешно сохранён: {test_file_name}")
+                test_file_url = storage.url(test_file_name)
+                logger.info(f"URL тестового файла: {test_file_url}")
+                storage.delete(test_file_name)
+                logger.info(f"Тестовый файл удалён: {test_file_name}")
+            except Exception as e:
+                logger.error(f"Ошибка подключения к Yandex Object Storage: {str(e)}")
 
             # Обработка креативов
             if creatives:
@@ -209,7 +229,6 @@ def create_startup(request):
                         file_type=creative_type,
                         uploaded_at=timezone.now()
                     )
-                    # Логируем путь, куда должен сохраниться файл
                     file_path = f"startups/{startup.startup_id}/creatives/{creative_file.name}"
                     logger.info(f"Сохранение креатива: {creative_file.name} в {file_path}")
                     file_storage.file_url.save(file_path, creative_file, save=True)
@@ -229,7 +248,6 @@ def create_startup(request):
                         file_type=proof_type,
                         uploaded_at=timezone.now()
                     )
-                    # Логируем путь, куда должен сохраниться файл
                     file_path = f"startups/{startup.startup_id}/proofs/{proof_file.name}"
                     logger.info(f"Сохранение пруфа: {proof_file.name} в {file_path}")
                     file_storage.file_url.save(file_path, proof_file, save=True)
@@ -266,15 +284,20 @@ def edit_startup(request, startup_id):
                 startup.current_step = int(request.POST.get('current_step'))
             startup.save()
 
+            # Явное сохранение логотипа
+            logo = form.cleaned_data.get('logo')
+            if logo:
+                startup.planet_logo.save(f"startups/{startup.startup_id}/logos/{logo.name}", logo, save=True)
+                logger.info(f"Логотип сохранён: {startup.planet_logo.url}")
+
             # Логирование информации о файлах
             logger.info("=== Обновление стартапа ===")
             logger.info(f"Стартап ID: {startup.startup_id}")
             
             # Логотип
-            logo = form.cleaned_data.get('logo')
             if logo:
                 logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
-                logger.info(f"Путь сохранения логотипа: {startup.planet_logo.path if startup.planet_logo else 'Не сохранён'}")
+                logger.info(f"Путь сохранения логотипа: {startup.planet_logo.url}")
             else:
                 logger.info("Логотип не загружен")
 
@@ -314,6 +337,22 @@ def edit_startup(request, startup_id):
             logger.info(f"AWS_STORAGE_BUCKET_NAME: {getattr(settings, 'AWS_STORAGE_BUCKET_NAME', 'Не задано')}")
             logger.info(f"AWS_S3_ENDPOINT_URL: {getattr(settings, 'AWS_S3_ENDPOINT_URL', 'Не задано')}")
             logger.info(f"AWS_DEFAULT_ACL: {getattr(settings, 'AWS_DEFAULT_ACL', 'Не задано')}")
+
+            # Проверка подключения к Yandex Object Storage
+            logger.info("=== Проверка подключения к Yandex Object Storage ===")
+            try:
+                from storages.backends.s3boto3 import S3Boto3Storage
+                storage = S3Boto3Storage()
+                test_file_name = f"test/test_file_{startup.startup_id}.txt"
+                test_content = "This is a test file to check Yandex Object Storage connection."
+                storage.save(test_file_name, test_content.encode('utf-8'))
+                logger.info(f"Тестовый файл успешно сохранён: {test_file_name}")
+                test_file_url = storage.url(test_file_name)
+                logger.info(f"URL тестового файла: {test_file_url}")
+                storage.delete(test_file_name)
+                logger.info(f"Тестовый файл удалён: {test_file_name}")
+            except Exception as e:
+                logger.error(f"Ошибка подключения к Yandex Object Storage: {str(e)}")
 
             # Обработка креативов
             if creatives:
