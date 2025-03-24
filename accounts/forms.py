@@ -112,10 +112,26 @@ class StartupForm(forms.ModelForm):
             cleaned_data['only_invest'] = False
             cleaned_data['only_buy'] = False
 
-        # Убедимся, что creatives и proofs возвращают список файлов
-        if 'creatives' in cleaned_data and not isinstance(cleaned_data['creatives'], list):
-            cleaned_data['creatives'] = [cleaned_data['creatives']] if cleaned_data['creatives'] else []
-        if 'proofs' in cleaned_data and not isinstance(cleaned_data['proofs'], list):
-            cleaned_data['proofs'] = [cleaned_data['proofs']] if cleaned_data['proofs'] else []
+        # Убедимся, что creatives и proofs — это плоский список файлов
+        if 'creatives' in cleaned_data:
+            # Если это список списков, распакуем его
+            creatives = cleaned_data['creatives']
+            if creatives and isinstance(creatives, list) and all(isinstance(item, list) for item in creatives):
+                cleaned_data['creatives'] = [file for sublist in creatives for file in sublist]
+            # Если это не список, обернём в список
+            elif creatives and not isinstance(creatives, list):
+                cleaned_data['creatives'] = [creatives]
+            # Если пусто, оставим пустой список
+            else:
+                cleaned_data['creatives'] = creatives if creatives else []
+
+        if 'proofs' in cleaned_data:
+            proofs = cleaned_data['proofs']
+            if proofs and isinstance(proofs, list) and all(isinstance(item, list) for item in proofs):
+                cleaned_data['proofs'] = [file for sublist in proofs for file in sublist]
+            elif proofs and not isinstance(proofs, list):
+                cleaned_data['proofs'] = [proofs]
+            else:
+                cleaned_data['proofs'] = proofs if proofs else []
 
         return cleaned_data

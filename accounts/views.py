@@ -151,6 +151,9 @@ def create_startup(request):
                 creative_type = FileTypes.objects.get(type_name='creative')
                 entity_type = EntityTypes.objects.get(type_name='startup')
                 for creative_file in creatives:
+                    # Пропускаем, если creative_file — это не файл
+                    if not hasattr(creative_file, 'name'):
+                        continue
                     file_storage = FileStorage(
                         entity_type=entity_type,
                         entity_id=startup.startup_id,
@@ -165,6 +168,9 @@ def create_startup(request):
                 proof_type = FileTypes.objects.get(type_name='proof')
                 entity_type = EntityTypes.objects.get(type_name='startup')
                 for proof_file in proofs:
+                    # Пропускаем, если proof_file — это не файл
+                    if not hasattr(proof_file, 'name'):
+                        continue
                     file_storage = FileStorage(
                         entity_type=entity_type,
                         entity_id=startup.startup_id,
@@ -212,6 +218,9 @@ def edit_startup(request, startup_id):
                 creative_type = FileTypes.objects.get(type_name='creative')
                 entity_type = EntityTypes.objects.get(type_name='startup')
                 for creative_file in creatives:
+                    # Пропускаем, если creative_file — это не файл
+                    if not hasattr(creative_file, 'name'):
+                        continue
                     file_storage = FileStorage(
                         entity_type=entity_type,
                         entity_id=startup.startup_id,
@@ -227,6 +236,9 @@ def edit_startup(request, startup_id):
                 proof_type = FileTypes.objects.get(type_name='proof')
                 entity_type = EntityTypes.objects.get(type_name='startup')
                 for proof_file in proofs:
+                    # Пропускаем, если proof_file — это не файл
+                    if not hasattr(proof_file, 'name'):
+                        continue
                     file_storage = FileStorage(
                         entity_type=entity_type,
                         entity_id=startup.startup_id,
