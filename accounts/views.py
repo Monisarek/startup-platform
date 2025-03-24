@@ -129,138 +129,17 @@ def legal(request):
 # Настройка логгера
 logger = logging.getLogger(__name__)
 
-@login_required
-def create_startup(request):
-    if request.method == 'POST':
-        form = StartupForm(request.POST, request.FILES)
-        if form.is_valid():
-            startup = form.save(commit=False)
-            startup.owner = request.user
-            startup.created_at = timezone.now()
-            startup.updated_at = timezone.now()
-            startup.status = 'pending'
-            try:
-                startup.status_id = ReviewStatuses.objects.get(status_name='Pending')
-            except ReviewStatuses.DoesNotExist:
-                raise ValueError("Статус 'Pending' не найден в базе данных.")
-            startup.save()
+import logging
+import os
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from .forms import StartupForm
+from .models import Startups, ReviewStatuses, FileStorage, FileTypes, EntityTypes
 
-            # Явное сохранение логотипа
-            logo = form.cleaned_data.get('logo')
-            if logo:
-                startup.planet_logo.save(f"startups/{startup.startup_id}/logos/{logo.name}", logo, save=True)
-                logger.info(f"Логотип сохранён: {startup.planet_logo.url}")
-
-            # Логирование информации о файлах
-            logger.info("=== Отправка стартапа на модерацию ===")
-            logger.info(f"Стартап ID: {startup.startup_id}")
-            
-            # Логотип
-            if logo:
-                logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
-                logger.info(f"Путь сохранения логотипа: {startup.planet_logo.url}")
-            else:
-                logger.info("Логотип не загружен")
-
-            # Креативы
-            creatives = form.cleaned_data.get('creatives', [])
-            if creatives:
-                logger.info(f"Креативы: {len(creatives)} файлов")
-                for i, creative_file in enumerate(creatives, 1):
-                    if hasattr(creative_file, 'name'):
-                        logger.info(f"Креатив {i}: {creative_file.name}, размер: {creative_file.size} байт")
-                    else:
-                        logger.info(f"Креатив {i}: Неверный формат (не файл): {creative_file}")
-            else:
-                logger.info("Креативы не загружены")
-
-            # Пруфы
-            proofs = form.cleaned_data.get('proofs', [])
-            if proofs:
-                logger.info(f"Пруфы: {len(proofs)} файлов")
-                for i, proof_file in enumerate(proofs, 1):
-                    if hasattr(proof_file, 'name'):
-                        logger.info(f"Пруф {i}: {proof_file.name}, размер: {proof_file.size} байт")
-                    else:
-                        logger.info(f"Пруф {i}: Неверный формат (не файл): {proof_file}")
-            else:
-                logger.info("Пруфы не загружены")
-
-            # Логирование переменных окружения
-            logger.info("=== Переменные окружения ===")
-            for key, value in os.environ.items():
-                logger.info(f"{key}: {value}")
-
-            # Логирование настроек Yandex Object Storage
-            logger.info("=== Настройки Yandex Object Storage ===")
-            logger.info(f"AWS_ACCESS_KEY_ID: {getattr(settings, 'AWS_ACCESS_KEY_ID', 'Не задано')}")
-            logger.info(f"AWS_SECRET_ACCESS_KEY: {getattr(settings, 'AWS_SECRET_ACCESS_KEY', 'Не задано')}")
-            logger.info(f"AWS_STORAGE_BUCKET_NAME: {getattr(settings, 'AWS_STORAGE_BUCKET_NAME', 'Не задано')}")
-            logger.info(f"AWS_S3_ENDPOINT_URL: {getattr(settings, 'AWS_S3_ENDPOINT_URL', 'Не задано')}")
-            logger.info(f"AWS_DEFAULT_ACL: {getattr(settings, 'AWS_DEFAULT_ACL', 'Не задано')}")
-
-            # Проверка подключения к Yandex Object Storage
-            logger.info("=== Проверка подключения к Yandex Object Storage ===")
-            try:
-                from storages.backends.s3boto3 import S3Boto3Storage
-                storage = S3Boto3Storage()
-                test_file_name = f"test/test_file_{startup.startup_id}.txt"
-                test_content = "This is a test file to check Yandex Object Storage connection."
-                storage.save(test_file_name, test_content.encode('utf-8'))
-                logger.info(f"Тестовый файл успешно сохранён: {test_file_name}")
-                test_file_url = storage.url(test_file_name)
-                logger.info(f"URL тестового файла: {test_file_url}")
-                storage.delete(test_file_name)
-                logger.info(f"Тестовый файл удалён: {test_file_name}")
-            except Exception as e:
-                logger.error(f"Ошибка подключения к Yandex Object Storage: {str(e)}")
-
-            # Обработка креативов
-            if creatives:
-                creative_type = FileTypes.objects.get(type_name='creative')
-                entity_type = EntityTypes.objects.get(type_name='startup')
-                for creative_file in creatives:
-                    if not hasattr(creative_file, 'name'):
-                        logger.warning(f"Пропущен креатив, так как это не файл: {creative_file}")
-                        continue
-                    file_storage = FileStorage(
-                        entity_type=entity_type,
-                        entity_id=startup.startup_id,
-                        file_type=creative_type,
-                        uploaded_at=timezone.now()
-                    )
-                    file_path = f"startups/{startup.startup_id}/creatives/{creative_file.name}"
-                    logger.info(f"Сохранение креатива: {creative_file.name} в {file_path}")
-                    file_storage.file_url.save(file_path, creative_file, save=True)
-                    logger.info(f"Креатив сохранён: {file_storage.file_url.url}")
-
-            # Обработка пруфов
-            if proofs:
-                proof_type = FileTypes.objects.get(type_name='proof')
-                entity_type = EntityTypes.objects.get(type_name='startup')
-                for proof_file in proofs:
-                    if not hasattr(proof_file, 'name'):
-                        logger.warning(f"Пропущен пруф, так как это не файл: {proof_file}")
-                        continue
-                    file_storage = FileStorage(
-                        entity_type=entity_type,
-                        entity_id=startup.startup_id,
-                        file_type=proof_type,
-                        uploaded_at=timezone.now()
-                    )
-                    file_path = f"startups/{startup.startup_id}/proofs/{proof_file.name}"
-                    logger.info(f"Сохранение пруфа: {proof_file.name} в {file_path}")
-                    file_storage.file_url.save(file_path, proof_file, save=True)
-                    logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
-
-            messages.success(request, f'Стартап "{startup.title}" успешно создан и отправлен на модерацию!')
-            return redirect('profile')
-        else:
-            messages.error(request, 'Форма содержит ошибки.')
-            return render(request, 'accounts/create_startup.html', {'form': form})
-    else:
-        form = StartupForm()
-    return render(request, 'accounts/create_startup.html', {'form': form})
+logger = logging.getLogger(__name__)
 
 @login_required
 def create_startup(request):
@@ -331,6 +210,12 @@ def create_startup(request):
             logger.info(f"AWS_STORAGE_BUCKET_NAME: {getattr(settings, 'AWS_STORAGE_BUCKET_NAME', 'Не задано')}")
             logger.info(f"AWS_S3_ENDPOINT_URL: {getattr(settings, 'AWS_S3_ENDPOINT_URL', 'Не задано')}")
             logger.info(f"AWS_DEFAULT_ACL: {getattr(settings, 'AWS_DEFAULT_ACL', 'Не задано')}")
+
+            # Проверка DEFAULT_FILE_STORAGE
+            from django.core.files.storage import default_storage
+            logger.info("=== Проверка DEFAULT_FILE_STORAGE ===")
+            logger.info(f"DEFAULT_FILE_STORAGE class: {settings.DEFAULT_FILE_STORAGE}")
+            logger.info(f"default_storage: {default_storage.__class__.__name__}")
 
             # Проверка подключения к Yandex Object Storage
             logger.info("=== Проверка подключения к Yandex Object Storage ===")
@@ -396,6 +281,153 @@ def create_startup(request):
     else:
         form = StartupForm()
     return render(request, 'accounts/create_startup.html', {'form': form})
+
+@login_required
+def edit_startup(request, startup_id):
+    logger.debug(f"Request method: {request.method}")
+    logger.debug(f"Request POST: {request.POST}")
+    logger.debug(f"Request FILES: {dict(request.FILES)}")
+    
+    startup = get_object_or_404(Startups, startup_id=startup_id)
+    if request.user != startup.owner:
+        messages.error(request, 'У вас нет прав для редактирования этого стартапа.')
+        return redirect('startup_detail', startup_id=startup_id)
+
+    if request.method == 'POST':
+        form = StartupForm(request.POST, request.FILES, instance=startup)
+        if form.is_valid():
+            startup = form.save(commit=False)
+            startup.status = 'pending'
+            startup.is_edited = True
+            startup.updated_at = timezone.now()
+            if 'current_step' in request.POST:
+                startup.current_step = int(request.POST.get('current_step'))
+            startup.save()
+
+            # Явное сохранение логотипа
+            logo = form.cleaned_data.get('logo')
+            if logo:
+                startup.planet_logo.save(f"startups/{startup.startup_id}/logos/{logo.name}", logo, save=True)
+                logger.info(f"Логотип сохранён: {startup.planet_logo.url}")
+
+            # Логирование информации о файлах
+            logger.info("=== Обновление стартапа ===")
+            logger.info(f"Стартап ID: {startup.startup_id}")
+            
+            # Логотип
+            if logo:
+                logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
+                logger.info(f"Путь сохранения логотипа: {startup.planet_logo.url}")
+            else:
+                logger.info("Логотип не загружен")
+
+            # Креативы
+            creatives = form.cleaned_data.get('creatives', [])
+            if creatives:
+                logger.info(f"Креативы: {len(creatives)} файлов")
+                for i, creative_file in enumerate(creatives, 1):
+                    if hasattr(creative_file, 'name'):
+                        logger.info(f"Креатив {i}: {creative_file.name}, размер: {creative_file.size} байт")
+                    else:
+                        logger.info(f"Креатив {i}: Неверный формат (не файл): {creative_file}")
+            else:
+                logger.info("Креативы не загружены")
+
+            # Пруфы
+            proofs = form.cleaned_data.get('proofs', [])
+            if proofs:
+                logger.info(f"Пруфы: {len(proofs)} файлов")
+                for i, proof_file in enumerate(proofs, 1):
+                    if hasattr(proof_file, 'name'):
+                        logger.info(f"Пруф {i}: {proof_file.name}, размер: {proof_file.size} байт")
+                    else:
+                        logger.info(f"Пруф {i}: Неверный формат (не файл): {proof_file}")
+            else:
+                logger.info("Пруфы не загружены")
+
+            # Логирование переменных окружения
+            logger.info("=== Переменные окружения ===")
+            for key, value in os.environ.items():
+                logger.info(f"{key}: {value}")
+
+            # Логирование настроек Yandex Object Storage
+            logger.info("=== Настройки Yandex Object Storage ===")
+            logger.info(f"AWS_ACCESS_KEY_ID: {getattr(settings, 'AWS_ACCESS_KEY_ID', 'Не задано')}")
+            logger.info(f"AWS_SECRET_ACCESS_KEY: {getattr(settings, 'AWS_SECRET_ACCESS_KEY', 'Не задано')}")
+            logger.info(f"AWS_STORAGE_BUCKET_NAME: {getattr(settings, 'AWS_STORAGE_BUCKET_NAME', 'Не задано')}")
+            logger.info(f"AWS_S3_ENDPOINT_URL: {getattr(settings, 'AWS_S3_ENDPOINT_URL', 'Не задано')}")
+            logger.info(f"AWS_DEFAULT_ACL: {getattr(settings, 'AWS_DEFAULT_ACL', 'Не задано')}")
+
+            # Проверка DEFAULT_FILE_STORAGE
+            from django.core.files.storage import default_storage
+            logger.info("=== Проверка DEFAULT_FILE_STORAGE ===")
+            logger.info(f"DEFAULT_FILE_STORAGE class: {settings.DEFAULT_FILE_STORAGE}")
+            logger.info(f"default_storage: {default_storage.__class__.__name__}")
+
+            # Проверка подключения к Yandex Object Storage
+            logger.info("=== Проверка подключения к Yandex Object Storage ===")
+            try:
+                from storages.backends.s3boto3 import S3Boto3Storage
+                from django.core.files.base import ContentFile
+                storage = S3Boto3Storage()
+                test_file_name = f"test/test_file_{startup.startup_id}.txt"
+                test_content = "This is a test file to check Yandex Object Storage connection."
+                test_file = ContentFile(test_content.encode('utf-8'))
+                storage.save(test_file_name, test_file)
+                logger.info(f"Тестовый файл успешно сохранён: {test_file_name}")
+                test_file_url = storage.url(test_file_name)
+                logger.info(f"URL тестового файла: {test_file_url}")
+                storage.delete(test_file_name)
+                logger.info(f"Тестовый файл удалён: {test_file_name}")
+            except Exception as e:
+                logger.error(f"Ошибка подключения к Yandex Object Storage: {str(e)}", exc_info=True)
+
+            # Обработка креативов
+            if creatives:
+                creative_type = FileTypes.objects.get(type_name='creative')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                for creative_file in creatives:
+                    if not hasattr(creative_file, 'name'):
+                        logger.warning(f"Пропущен креатив, так как это не файл: {creative_file}")
+                        continue
+                    file_storage = FileStorage(
+                        entity_type=entity_type,
+                        entity_id=startup.startup_id,
+                        file_type=creative_type,
+                        uploaded_at=timezone.now()
+                    )
+                    file_path = f"startups/{startup.startup_id}/creatives/{creative_file.name}"
+                    logger.info(f"Сохранение креатива: {creative_file.name} в {file_path}")
+                    file_storage.file_url.save(file_path, creative_file, save=True)
+                    logger.info(f"Креатив сохранён: {file_storage.file_url.url}")
+
+            # Обработка пруфов
+            if proofs:
+                proof_type = FileTypes.objects.get(type_name='proof')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                for proof_file in proofs:
+                    if not hasattr(proof_file, 'name'):
+                        logger.warning(f"Пропущен пруф, так как это не файл: {proof_file}")
+                        continue
+                    file_storage = FileStorage(
+                        entity_type=entity_type,
+                        entity_id=startup.startup_id,
+                        file_type=proof_type,
+                        uploaded_at=timezone.now()
+                    )
+                    file_path = f"startups/{startup.startup_id}/proofs/{proof_file.name}"
+                    logger.info(f"Сохранение пруфа: {proof_file.name} в {file_path}")
+                    file_storage.file_url.save(file_path, proof_file, save=True)
+                    logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
+
+            messages.success(request, f'Стартап "{startup.title}" обновлён и отправлен на модерацию.')
+            return redirect('startup_detail', startup_id=startup_id)
+        else:
+            messages.error(request, 'Форма содержит ошибки. Проверьте введенные данные.')
+            logger.error(f"Form errors: {form.errors}")
+    else:
+        form = StartupForm(instance=startup)
+    return render(request, 'accounts/edit_startup.html', {'form': form, 'startup': startup})
 
 # Исправленная панель модератора
 def moderator_dashboard(request):
