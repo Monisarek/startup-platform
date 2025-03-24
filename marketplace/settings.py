@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'storages',  # Убедись, что 'storages' добавлен
+    'widget_tweaks',  # Добавляем widget_tweaks
 ]
 
 MIDDLEWARE = [
