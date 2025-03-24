@@ -32,8 +32,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'widget_tweaks',  # Для улучшения форм в шаблонах
-    'accounts',       # Ваше приложение
+    'accounts',
+    'storages',  # Убедись, что 'storages' добавлен
 ]
 
 MIDDLEWARE = [
@@ -146,16 +146,15 @@ LOGGING = {
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 
-AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = '1-st-test-bucket-for-startup-platform-3gb-1'  # Замени на имя твоего бакета
+# Настройки Yandex Object Storage
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = '1-st-test-bucket-for-startup-platform-3gb-1'
 AWS_S3_ENDPOINT_URL = 'https://storage.yandexcloud.net'
-AWS_S3_REGION_NAME = 'ru-central1'  # Можно указать любую зону, например 'us-east-1'
-AWS_S3_SIGNATURE_VERSION = 's3v4'
-AWS_S3_ADDRESSING_STYLE = 'path'  # Для совместимости с Yandex
-
-# Если файлы должны быть публично доступны (например, для отображения изображений)
 AWS_DEFAULT_ACL = 'public-read'
+AWS_S3_FILE_OVERWRITE = False
+AWS_S3_REGION_NAME = 'ru-central1'
+AWS_S3_SIGNATURE_VERSION = 's3v4'
 
 
 
