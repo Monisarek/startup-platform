@@ -145,14 +145,63 @@ def create_startup(request):
                 raise ValueError("Статус 'Pending' не найден в базе данных.")
             startup.save()
 
-            # Обработка креативов
+            # Логирование информации о файлах
+            logger.info("=== Отправка стартапа на модерацию ===")
+            logger.info(f"Стартап ID: {startup.startup_id}")
+            
+            # Логотип
+            logo = form.cleaned_data.get('logo')
+            if logo:
+                logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
+                logger.info(f"Путь сохранения логотипа: {startup.planet_logo.path if startup.planet_logo else 'Не сохранён'}")
+            else:
+                logger.info("Логотип не загружен")
+
+            # Креативы
             creatives = form.cleaned_data.get('creatives', [])
+            if creatives:
+                logger.info(f"Креативы: {len(creatives)} файлов")
+                for i, creative_file in enumerate(creatives, 1):
+                    if hasattr(creative_file, 'name'):
+                        logger.info(f"Креатив {i}: {creative_file.name}, размер: {creative_file.size} байт")
+                    else:
+                        logger.info(f"Креатив {i}: Неверный формат (не файл): {creative_file}")
+            else:
+                logger.info("Креативы не загружены")
+
+            # Пруфы
+            proofs = form.cleaned_data.get('proofs', [])
+            if proofs:
+                logger.info(f"Пруфы: {len(proofs)} файлов")
+                for i, proof_file in enumerate(proofs, 1):
+                    if hasattr(proof_file, 'name'):
+                        logger.info(f"Пруф {i}: {proof_file.name}, размер: {proof_file.size} байт")
+                    else:
+                        logger.info(f"Пруф {i}: Неверный формат (не файл): {proof_file}")
+            else:
+                logger.info("Пруфы не загружены")
+
+            # Логирование переменных окружения
+            logger.info("=== Переменные окружения ===")
+            for key, value in os.environ.items():
+                logger.info(f"{key}: {value}")
+
+            # Логирование настроек Yandex Object Storage
+            from django.conf import settings
+            logger.info("=== Настройки Yandex Object Storage ===")
+            logger.info(f"AWS_ACCESS_KEY_ID: {getattr(settings, 'AWS_ACCESS_KEY_ID', 'Не задано')}")
+            logger.info(f"AWS_SECRET_ACCESS_KEY: {getattr(settings, 'AWS_SECRET_ACCESS_KEY', 'Не задано')}")
+            logger.info(f"AWS_STORAGE_BUCKET_NAME: {getattr(settings, 'AWS_STORAGE_BUCKET_NAME', 'Не задано')}")
+            logger.info(f"AWS_S3_ENDPOINT_URL: {getattr(settings, 'AWS_S3_ENDPOINT_URL', 'Не задано')}")
+            logger.info(f"AWS_DEFAULT_ACL: {getattr(settings, 'AWS_DEFAULT_ACL', 'Не задано')}")
+
+            # Обработка креативов
             if creatives:
                 creative_type = FileTypes.objects.get(type_name='creative')
                 entity_type = EntityTypes.objects.get(type_name='startup')
                 for creative_file in creatives:
-                    # Пропускаем, если creative_file — это не файл
                     if not hasattr(creative_file, 'name'):
+                        logger.warning(f"Пропущен креатив, так как это не файл: {creative_file}")
                         continue
                     file_storage = FileStorage(
                         entity_type=entity_type,
@@ -160,16 +209,19 @@ def create_startup(request):
                         file_type=creative_type,
                         uploaded_at=timezone.now()
                     )
-                    file_storage.file_url.save(creative_file.name, creative_file, save=True)
+                    # Логируем путь, куда должен сохраниться файл
+                    file_path = f"startups/{startup.startup_id}/creatives/{creative_file.name}"
+                    logger.info(f"Сохранение креатива: {creative_file.name} в {file_path}")
+                    file_storage.file_url.save(file_path, creative_file, save=True)
+                    logger.info(f"Креатив сохранён: {file_storage.file_url.url}")
 
             # Обработка пруфов
-            proofs = form.cleaned_data.get('proofs', [])
             if proofs:
                 proof_type = FileTypes.objects.get(type_name='proof')
                 entity_type = EntityTypes.objects.get(type_name='startup')
                 for proof_file in proofs:
-                    # Пропускаем, если proof_file — это не файл
                     if not hasattr(proof_file, 'name'):
+                        logger.warning(f"Пропущен пруф, так как это не файл: {proof_file}")
                         continue
                     file_storage = FileStorage(
                         entity_type=entity_type,
@@ -177,7 +229,11 @@ def create_startup(request):
                         file_type=proof_type,
                         uploaded_at=timezone.now()
                     )
-                    file_storage.file_url.save(proof_file.name, proof_file, save=True)
+                    # Логируем путь, куда должен сохраниться файл
+                    file_path = f"startups/{startup.startup_id}/proofs/{proof_file.name}"
+                    logger.info(f"Сохранение пруфа: {proof_file.name} в {file_path}")
+                    file_storage.file_url.save(file_path, proof_file, save=True)
+                    logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
 
             messages.success(request, f'Стартап "{startup.title}" успешно создан и отправлен на модерацию!')
             return redirect('profile')
@@ -206,20 +262,66 @@ def edit_startup(request, startup_id):
             startup.status = 'pending'
             startup.is_edited = True
             startup.updated_at = timezone.now()
-            # Устанавливаем current_step только если он передан в POST
             if 'current_step' in request.POST:
                 startup.current_step = int(request.POST.get('current_step'))
             startup.save()
 
-            # Обработка креативов
+            # Логирование информации о файлах
+            logger.info("=== Обновление стартапа ===")
+            logger.info(f"Стартап ID: {startup.startup_id}")
+            
+            # Логотип
+            logo = form.cleaned_data.get('logo')
+            if logo:
+                logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
+                logger.info(f"Путь сохранения логотипа: {startup.planet_logo.path if startup.planet_logo else 'Не сохранён'}")
+            else:
+                logger.info("Логотип не загружен")
+
+            # Креативы
             creatives = form.cleaned_data.get('creatives', [])
             if creatives:
-                logger.debug(f"Creatives found in form.cleaned_data: {creatives}")
+                logger.info(f"Креативы: {len(creatives)} файлов")
+                for i, creative_file in enumerate(creatives, 1):
+                    if hasattr(creative_file, 'name'):
+                        logger.info(f"Креатив {i}: {creative_file.name}, размер: {creative_file.size} байт")
+                    else:
+                        logger.info(f"Креатив {i}: Неверный формат (не файл): {creative_file}")
+            else:
+                logger.info("Креативы не загружены")
+
+            # Пруфы
+            proofs = form.cleaned_data.get('proofs', [])
+            if proofs:
+                logger.info(f"Пруфы: {len(proofs)} файлов")
+                for i, proof_file in enumerate(proofs, 1):
+                    if hasattr(proof_file, 'name'):
+                        logger.info(f"Пруф {i}: {proof_file.name}, размер: {proof_file.size} байт")
+                    else:
+                        logger.info(f"Пруф {i}: Неверный формат (не файл): {proof_file}")
+            else:
+                logger.info("Пруфы не загружены")
+
+            # Логирование переменных окружения
+            logger.info("=== Переменные окружения ===")
+            for key, value in os.environ.items():
+                logger.info(f"{key}: {value}")
+
+            # Логирование настроек Yandex Object Storage
+            logger.info("=== Настройки Yandex Object Storage ===")
+            logger.info(f"AWS_ACCESS_KEY_ID: {getattr(settings, 'AWS_ACCESS_KEY_ID', 'Не задано')}")
+            logger.info(f"AWS_SECRET_ACCESS_KEY: {getattr(settings, 'AWS_SECRET_ACCESS_KEY', 'Не задано')}")
+            logger.info(f"AWS_STORAGE_BUCKET_NAME: {getattr(settings, 'AWS_STORAGE_BUCKET_NAME', 'Не задано')}")
+            logger.info(f"AWS_S3_ENDPOINT_URL: {getattr(settings, 'AWS_S3_ENDPOINT_URL', 'Не задано')}")
+            logger.info(f"AWS_DEFAULT_ACL: {getattr(settings, 'AWS_DEFAULT_ACL', 'Не задано')}")
+
+            # Обработка креативов
+            if creatives:
                 creative_type = FileTypes.objects.get(type_name='creative')
                 entity_type = EntityTypes.objects.get(type_name='startup')
                 for creative_file in creatives:
-                    # Пропускаем, если creative_file — это не файл
                     if not hasattr(creative_file, 'name'):
+                        logger.warning(f"Пропущен креатив, так как это не файл: {creative_file}")
                         continue
                     file_storage = FileStorage(
                         entity_type=entity_type,
@@ -227,17 +329,18 @@ def edit_startup(request, startup_id):
                         file_type=creative_type,
                         uploaded_at=timezone.now()
                     )
-                    file_storage.file_url.save(creative_file.name, creative_file, save=True)
+                    file_path = f"startups/{startup.startup_id}/creatives/{creative_file.name}"
+                    logger.info(f"Сохранение креатива: {creative_file.name} в {file_path}")
+                    file_storage.file_url.save(file_path, creative_file, save=True)
+                    logger.info(f"Креатив сохранён: {file_storage.file_url.url}")
 
             # Обработка пруфов
-            proofs = form.cleaned_data.get('proofs', [])
             if proofs:
-                logger.debug(f"Proofs found in form.cleaned_data: {proofs}")
                 proof_type = FileTypes.objects.get(type_name='proof')
                 entity_type = EntityTypes.objects.get(type_name='startup')
                 for proof_file in proofs:
-                    # Пропускаем, если proof_file — это не файл
                     if not hasattr(proof_file, 'name'):
+                        logger.warning(f"Пропущен пруф, так как это не файл: {proof_file}")
                         continue
                     file_storage = FileStorage(
                         entity_type=entity_type,
@@ -245,7 +348,10 @@ def edit_startup(request, startup_id):
                         file_type=proof_type,
                         uploaded_at=timezone.now()
                     )
-                    file_storage.file_url.save(proof_file.name, proof_file, save=True)
+                    file_path = f"startups/{startup.startup_id}/proofs/{proof_file.name}"
+                    logger.info(f"Сохранение пруфа: {proof_file.name} в {file_path}")
+                    file_storage.file_url.save(file_path, proof_file, save=True)
+                    logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
 
             messages.success(request, f'Стартап "{startup.title}" обновлён и отправлен на модерацию.')
             return redirect('startup_detail', startup_id=startup_id)
