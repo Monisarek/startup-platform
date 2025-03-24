@@ -63,9 +63,10 @@ class StartupForm(forms.ModelForm):
         model = Startups
         fields = [
             'title', 'description', 'funding_goal', 'amount_raised', 'valuation', 'pitch_deck_url',
-            'planet_top_color', 'planet_middle_color', 'planet_bottom_color', 'planet_logo',
+            'planet_top_color', 'planet_middle_color', 'planet_bottom_color', 'logo',
             'only_invest', 'only_buy', 'both_mode', 'direction', 'stage',
-            'agree_rules', 'agree_data_processing', 'micro_investment_available'
+            'agree_rules', 'agree_data_processing', 'micro_investment_available',
+            'creatives', 'proofs'  # Добавляем поля, чтобы форма их обрабатывала
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
@@ -110,5 +111,11 @@ class StartupForm(forms.ModelForm):
         if both_mode and (only_invest or only_buy):
             cleaned_data['only_invest'] = False
             cleaned_data['only_buy'] = False
+
+        # Убедимся, что creatives и proofs возвращают список файлов
+        if 'creatives' in cleaned_data and not isinstance(cleaned_data['creatives'], list):
+            cleaned_data['creatives'] = [cleaned_data['creatives']] if cleaned_data['creatives'] else []
+        if 'proofs' in cleaned_data and not isinstance(cleaned_data['proofs'], list):
+            cleaned_data['proofs'] = [cleaned_data['proofs']] if cleaned_data['proofs'] else []
 
         return cleaned_data

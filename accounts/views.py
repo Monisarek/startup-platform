@@ -146,26 +146,32 @@ def create_startup(request):
             startup.save()
 
             # Обработка креативов
-            if 'creatives' in request.FILES:
-                for creative_file in request.FILES.getlist('creatives'):
-                    FileStorage.objects.create(
-                        entity_type=EntityTypes.objects.get(type_name='startup'),
+            creatives = form.cleaned_data.get('creatives', [])
+            if creatives:
+                creative_type = FileTypes.objects.get(type_name='creative')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                for creative_file in creatives:
+                    file_storage = FileStorage(
+                        entity_type=entity_type,
                         entity_id=startup.startup_id,
-                        file_url=creative_file,
-                        file_type=FileTypes.objects.get(type_name='creative'),
+                        file_type=creative_type,
                         uploaded_at=timezone.now()
                     )
+                    file_storage.file_url.save(creative_file.name, creative_file, save=True)
 
             # Обработка пруфов
-            if 'proofs' in request.FILES:
-                for proof_file in request.FILES.getlist('proofs'):
-                    FileStorage.objects.create(
-                        entity_type=EntityTypes.objects.get(type_name='startup'),
+            proofs = form.cleaned_data.get('proofs', [])
+            if proofs:
+                proof_type = FileTypes.objects.get(type_name='proof')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                for proof_file in proofs:
+                    file_storage = FileStorage(
+                        entity_type=entity_type,
                         entity_id=startup.startup_id,
-                        file_url=proof_file,
-                        file_type=FileTypes.objects.get(type_name='proof'),
+                        file_type=proof_type,
                         uploaded_at=timezone.now()
                     )
+                    file_storage.file_url.save(proof_file.name, proof_file, save=True)
 
             messages.success(request, f'Стартап "{startup.title}" успешно создан и отправлен на модерацию!')
             return redirect('profile')
@@ -197,34 +203,38 @@ def edit_startup(request, startup_id):
             # Устанавливаем current_step только если он передан в POST
             if 'current_step' in request.POST:
                 startup.current_step = int(request.POST.get('current_step'))
-            if 'logo' in request.FILES:
-                startup.planet_logo = request.FILES['logo']
-                startup.save(update_fields=['planet_logo'])
-                logger.debug(f"Logo saved at: {startup.planet_logo.url}")
-
-            if 'creatives' in request.FILES:
-                logger.debug(f"Creatives found in request.FILES: {request.FILES.getlist('creatives')}")
-                for creative_file in request.FILES.getlist('creatives'):
-                    FileStorage.objects.create(
-                        entity_type=EntityTypes.objects.get(type_name='startup'),
-                        entity_id=startup.startup_id,
-                        file_url=creative_file,
-                        file_type=FileTypes.objects.get(type_name='creative'),
-                        uploaded_at=timezone.now()
-                    )
-
-            if 'proofs' in request.FILES:
-                logger.debug(f"Proofs found in request.FILES: {request.FILES.getlist('proofs')}")
-                for proof_file in request.FILES.getlist('proofs'):
-                    FileStorage.objects.create(
-                        entity_type=EntityTypes.objects.get(type_name='startup'),
-                        entity_id=startup.startup_id,
-                        file_url=proof_file,
-                        file_type=FileTypes.objects.get(type_name='proof'),
-                        uploaded_at=timezone.now()
-                    )
-
             startup.save()
+
+            # Обработка креативов
+            creatives = form.cleaned_data.get('creatives', [])
+            if creatives:
+                logger.debug(f"Creatives found in form.cleaned_data: {creatives}")
+                creative_type = FileTypes.objects.get(type_name='creative')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                for creative_file in creatives:
+                    file_storage = FileStorage(
+                        entity_type=entity_type,
+                        entity_id=startup.startup_id,
+                        file_type=creative_type,
+                        uploaded_at=timezone.now()
+                    )
+                    file_storage.file_url.save(creative_file.name, creative_file, save=True)
+
+            # Обработка пруфов
+            proofs = form.cleaned_data.get('proofs', [])
+            if proofs:
+                logger.debug(f"Proofs found in form.cleaned_data: {proofs}")
+                proof_type = FileTypes.objects.get(type_name='proof')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                for proof_file in proofs:
+                    file_storage = FileStorage(
+                        entity_type=entity_type,
+                        entity_id=startup.startup_id,
+                        file_type=proof_type,
+                        uploaded_at=timezone.now()
+                    )
+                    file_storage.file_url.save(proof_file.name, proof_file, save=True)
+
             messages.success(request, f'Стартап "{startup.title}" обновлён и отправлен на модерацию.')
             return redirect('startup_detail', startup_id=startup_id)
         else:
