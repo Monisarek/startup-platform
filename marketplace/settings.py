@@ -3,6 +3,7 @@ from pathlib import Path
 import dj_database_url  # Для работы с DATABASE_URL от render.com
 from decouple import config
 import logging
+import django.core.files.storage
 
 logger = logging.getLogger(__name__)
 
@@ -180,8 +181,8 @@ logger.info(f"INSTALLED_APPS: {INSTALLED_APPS}")
 logger.info(f"MEDIA_URL: {MEDIA_URL}")
 
 # Принудительное обновление default_storage
-from django.core.files.storage import default_storage, get_storage_class
+from django.core.files.storage import default_storage
 logger.info("=== Принудительное обновление default_storage ===")
-storage_class = get_storage_class(DEFAULT_FILE_STORAGE)
+storage_class = django.core.files.storage.get_storage_class(DEFAULT_FILE_STORAGE)
 default_storage = storage_class()
 logger.info(f"default_storage после принудительного обновления: {default_storage.__class__.__name__}")
