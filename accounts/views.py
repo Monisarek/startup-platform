@@ -282,6 +282,7 @@ def create_startup(request):
         form = StartupForm()
     return render(request, 'accounts/create_startup.html', {'form': form})
 
+# Восстановленная функция edit_startup
 @login_required
 def edit_startup(request, startup_id):
     logger.debug(f"Request method: {request.method}")
@@ -420,14 +421,14 @@ def edit_startup(request, startup_id):
                     file_storage.file_url.save(file_path, proof_file, save=True)
                     logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
 
-            messages.success(request, f'Стартап "{startup.title}" обновлён и отправлен на модерацию.')
-            return redirect('startup_detail', startup_id=startup_id)
+            messages.success(request, f'Стартап "{startup.title}" успешно создан и отправлен на модерацию!')
+            return redirect('profile')
         else:
-            messages.error(request, 'Форма содержит ошибки. Проверьте введенные данные.')
-            logger.error(f"Form errors: {form.errors}")
+            messages.error(request, 'Форма содержит ошибки.')
+            return render(request, 'accounts/create_startup.html', {'form': form})
     else:
-        form = StartupForm(instance=startup)
-    return render(request, 'accounts/edit_startup.html', {'form': form, 'startup': startup})
+        form = StartupForm()
+    return render(request, 'accounts/create_startup.html', {'form': form})
 
 # Исправленная панель модератора
 def moderator_dashboard(request):
