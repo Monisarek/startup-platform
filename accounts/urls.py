@@ -1,7 +1,5 @@
 from django.urls import path
 from . import views
-from django.conf.urls.static import static
-from django.conf import settings  # Импортируем settings
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -20,4 +18,4 @@ urlpatterns = [
     path('moderator/reject/<int:startup_id>/', views.reject_startup, name='reject_startup'),
     path('vote/<int:startup_id>/', views.vote_startup, name='vote_startup'),
     path('startup/<int:startup_id>/edit/', views.edit_startup, name='edit_startup'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]

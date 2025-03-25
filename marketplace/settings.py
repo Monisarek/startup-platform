@@ -6,11 +6,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Настройки Yandex Object Storage (перемещаем в начало)
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = '1-st-test-bucket-for-startup-platform-3gb-1'
+AWS_S3_ENDPOINT_URL = 'https://storage.yandexcloud.net'
+AWS_DEFAULT_ACL = 'public-read'
+AWS_S3_FILE_OVERWRITE = False
+AWS_S3_REGION_NAME = 'ru-central1'
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# Проверка инициализации storages
+try:
+    from storages.backends.s3boto3 import S3Boto3Storage
+    logger.info("django-storages успешно импортирован")
+except ImportError as e:
+    logger.error(f"Ошибка импорта django-storages: {str(e)}")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Для продакшена рекомендуется сгенерировать новый секретный ключ
@@ -115,6 +130,9 @@ STATICFILES_DIRS = [BASE_DIR / "static"]  # Папка, где лежат исх
 STATIC_ROOT = BASE_DIR / "staticfiles"    # Папка для собранных статических файлов
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# Media files
+MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.storage.yandexcloud.net/'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -141,26 +159,6 @@ LOGGING = {
     },
 }
 
-
-# settings.py
-
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
-
-# Настройки Yandex Object Storage
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = '1-st-test-bucket-for-startup-platform-3gb-1'
-AWS_S3_ENDPOINT_URL = 'https://storage.yandexcloud.net'
-AWS_DEFAULT_ACL = 'public-read'
-AWS_S3_FILE_OVERWRITE = False
-AWS_S3_REGION_NAME = 'ru-central1'
-AWS_S3_SIGNATURE_VERSION = 's3v4'
-
-
-
-
-
 # Настройки для HTTPS на render.com
 # Render автоматически использует HTTPS, но Django должен это учитывать
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -179,3 +177,4 @@ X_FRAME_OPTIONS = 'DENY'
 logger.info("=== Проверка настроек Django ===")
 logger.info(f"DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}")
 logger.info(f"INSTALLED_APPS: {INSTALLED_APPS}")
+logger.info(f"MEDIA_URL: {MEDIA_URL}")

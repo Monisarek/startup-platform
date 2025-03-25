@@ -61,23 +61,6 @@ def user_logout(request):
     messages.success(request, 'Вы успешно вышли из системы.')
     return redirect('home')
 
-# Профиль пользователя
-def profile(request):
-    if not request.user.is_authenticated:
-        messages.error(request, 'Пожалуйста, войдите в систему, чтобы просмотреть профиль.')
-        return redirect('login')
-
-    if request.method == 'POST' and 'avatar' in request.FILES:
-        avatar = request.FILES['avatar']
-        fs = FileSystemStorage(location='static/accounts/images/avatars')
-        filename = f'user_{request.user.user_id}_avatar{os.path.splitext(avatar.name)[1]}'
-        fs.save(filename, avatar)
-        request.user.profile_picture_url = f'accounts/images/avatars/{filename}'
-        request.user.save()
-        messages.success(request, 'Аватарка успешно загружена!')
-
-    return render(request, 'accounts/profile.html', {'user': request.user})
-
 # Список одобренных стартапов
 def startups_list(request):
     approved_startups = Startups.objects.filter(status='approved')
@@ -141,6 +124,24 @@ from .models import Startups, ReviewStatuses, FileStorage, FileTypes, EntityType
 
 logger = logging.getLogger(__name__)
 
+# Профиль пользователя
+def profile(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'Пожалуйста, войдите в систему, чтобы просмотреть профиль.')
+        return redirect('login')
+
+    if request.method == 'POST' and 'avatar' in request.FILES:
+        avatar = request.FILES['avatar']
+        # Используем default_storage вместо FileSystemStorage
+        from django.core.files.storage import default_storage
+        filename = f'avatars/user_{request.user.user_id}_avatar{os.path.splitext(avatar.name)[1]}'
+        file_path = default_storage.save(filename, avatar)
+        request.user.profile_picture_url = default_storage.url(file_path)
+        request.user.save()
+        messages.success(request, 'Аватарка успешно загружена!')
+
+    return render(request, 'accounts/profile.html', {'user': request.user})
+
 @login_required
 def create_startup(request):
     if request.method == 'POST':
@@ -162,6 +163,9 @@ def create_startup(request):
             if logo:
                 startup.planet_logo.save(f"startups/{startup.startup_id}/logos/{logo.name}", logo, save=True)
                 logger.info(f"Логотип сохранён: {startup.planet_logo.url}")
+                # Дополнительная проверка URL
+                if not startup.planet_logo.url.startswith('https://'):
+                    logger.error(f"Логотип не сохранён в Yandex Object Storage: {startup.planet_logo.url}")
 
             # Логирование информации о файлах
             logger.info("=== Отправка стартапа на модерацию ===")
@@ -253,6 +257,9 @@ def create_startup(request):
                     logger.info(f"Сохранение креатива: {creative_file.name} в {file_path}")
                     file_storage.file_url.save(file_path, creative_file, save=True)
                     logger.info(f"Креатив сохранён: {file_storage.file_url.url}")
+                    # Дополнительная проверка URL
+                    if not file_storage.file_url.url.startswith('https://'):
+                        logger.error(f"Креатив не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
 
             # Обработка пруфов
             if proofs:
@@ -272,6 +279,9 @@ def create_startup(request):
                     logger.info(f"Сохранение пруфа: {proof_file.name} в {file_path}")
                     file_storage.file_url.save(file_path, proof_file, save=True)
                     logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
+                    # Дополнительная проверка URL
+                    if not file_storage.file_url.url.startswith('https://'):
+                        logger.error(f"Пруф не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
 
             messages.success(request, f'Стартап "{startup.title}" успешно создан и отправлен на модерацию!')
             return redirect('profile')
@@ -282,7 +292,6 @@ def create_startup(request):
         form = StartupForm()
     return render(request, 'accounts/create_startup.html', {'form': form})
 
-# Восстановленная функция edit_startup
 @login_required
 def edit_startup(request, startup_id):
     logger.debug(f"Request method: {request.method}")
@@ -310,6 +319,9 @@ def edit_startup(request, startup_id):
             if logo:
                 startup.planet_logo.save(f"startups/{startup.startup_id}/logos/{logo.name}", logo, save=True)
                 logger.info(f"Логотип сохранён: {startup.planet_logo.url}")
+                # Дополнительная проверка URL
+                if not startup.planet_logo.url.startswith('https://'):
+                    logger.error(f"Логотип не сохранён в Yandex Object Storage: {startup.planet_logo.url}")
 
             # Логирование информации о файлах
             logger.info("=== Обновление стартапа ===")
@@ -401,6 +413,9 @@ def edit_startup(request, startup_id):
                     logger.info(f"Сохранение креатива: {creative_file.name} в {file_path}")
                     file_storage.file_url.save(file_path, creative_file, save=True)
                     logger.info(f"Креатив сохранён: {file_storage.file_url.url}")
+                    # Дополнительная проверка URL
+                    if not file_storage.file_url.url.startswith('https://'):
+                        logger.error(f"Креатив не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
 
             # Обработка пруфов
             if proofs:
@@ -420,15 +435,18 @@ def edit_startup(request, startup_id):
                     logger.info(f"Сохранение пруфа: {proof_file.name} в {file_path}")
                     file_storage.file_url.save(file_path, proof_file, save=True)
                     logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
+                    # Дополнительная проверка URL
+                    if not file_storage.file_url.url.startswith('https://'):
+                        logger.error(f"Пруф не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
 
-            messages.success(request, f'Стартап "{startup.title}" успешно создан и отправлен на модерацию!')
+            messages.success(request, f'Стартап "{startup.title}" успешно отредактирован и отправлен на модерацию!')
             return redirect('profile')
         else:
             messages.error(request, 'Форма содержит ошибки.')
-            return render(request, 'accounts/create_startup.html', {'form': form})
+            return render(request, 'accounts/edit_startup.html', {'form': form, 'startup': startup})
     else:
-        form = StartupForm()
-    return render(request, 'accounts/create_startup.html', {'form': form})
+        form = StartupForm(instance=startup)
+    return render(request, 'accounts/edit_startup.html', {'form': form, 'startup': startup})
 
 # Исправленная панель модератора
 def moderator_dashboard(request):
