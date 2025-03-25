@@ -218,7 +218,7 @@ def create_startup(request):
             # Проверка DEFAULT_FILE_STORAGE
             from django.core.files.storage import default_storage
             logger.info("=== Проверка DEFAULT_FILE_STORAGE ===")
-            logger.info(f"DEFAULT_FILE_STORAGE class: {settings.DEFAULT_FILE_STORAGE}")
+            logger.info(f"STORAGES['default']['BACKEND']: {settings.STORAGES['default']['BACKEND']}")
             logger.info(f"default_storage: {default_storage.__class__.__name__}")
 
             # Проверка подключения к Yandex Object Storage
