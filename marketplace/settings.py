@@ -178,3 +178,8 @@ logger.info("=== Проверка настроек Django ===")
 logger.info(f"DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}")
 logger.info(f"INSTALLED_APPS: {INSTALLED_APPS}")
 logger.info(f"MEDIA_URL: {MEDIA_URL}")
+
+# Дополнительная проверка default_storage после всех настроек
+from django.core.files.storage import default_storage
+logger.info("=== Проверка default_storage в конце настроек ===")
+logger.info(f"default_storage после загрузки настроек: {default_storage.__class__.__name__}")
