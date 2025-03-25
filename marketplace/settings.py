@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Настройки Yandex Object Storage (перемещаем в начало)
+# Настройки Yandex Object Storage
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = '1-st-test-bucket-for-startup-platform-3gb-1'
+AWS_STORAGE_BUCKET_NAME = '1-st-test-bucket-for-startup-platform-3gb-1'  # Старый бакет
 AWS_S3_ENDPOINT_URL = 'https://storage.yandexcloud.net'
 AWS_DEFAULT_ACL = 'public-read'
 AWS_S3_FILE_OVERWRITE = False
@@ -131,7 +131,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"    # Папка для собранных
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
-MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.storage.yandexcloud.net/'
+MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.storage.yandexcloud.net/'  # Обновлено для старого бакета
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -179,7 +179,9 @@ logger.info(f"DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}")
 logger.info(f"INSTALLED_APPS: {INSTALLED_APPS}")
 logger.info(f"MEDIA_URL: {MEDIA_URL}")
 
-# Дополнительная проверка default_storage после всех настроек
-from django.core.files.storage import default_storage
-logger.info("=== Проверка default_storage в конце настроек ===")
-logger.info(f"default_storage после загрузки настроек: {default_storage.__class__.__name__}")
+# Принудительное обновление default_storage
+from django.core.files.storage import default_storage, get_storage_class
+logger.info("=== Принудительное обновление default_storage ===")
+storage_class = get_storage_class(DEFAULT_FILE_STORAGE)
+default_storage = storage_class()
+logger.info(f"default_storage после принудительного обновления: {default_storage.__class__.__name__}")
