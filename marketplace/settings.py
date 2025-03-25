@@ -180,8 +180,7 @@ logger.info(f"INSTALLED_APPS: {INSTALLED_APPS}")
 logger.info(f"MEDIA_URL: {MEDIA_URL}")
 
 # Принудительное обновление default_storage
-from django.core.files.storage import default_storage
-from django.core.files.storage.utils import get_storage_class
+from django.core.files.storage import default_storage, get_storage_class
 logger.info("=== Принудительное обновление default_storage ===")
 storage_class = get_storage_class(DEFAULT_FILE_STORAGE)
 default_storage = storage_class()
