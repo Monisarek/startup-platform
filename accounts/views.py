@@ -1,3 +1,4 @@
+# accounts/views.py
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -13,6 +14,8 @@ import shutil
 from django.conf import settings
 from .forms import RegisterForm, LoginForm, StartupForm
 from .models import Users, Startups, ReviewStatuses, UserVotes, StartupTimeline, FileStorage, EntityTypes, FileTypes
+from .models import creative_upload_path, proof_upload_path  # Добавляем импорт функций
+
 
 # Главная страница
 def home(request):
