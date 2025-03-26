@@ -101,11 +101,12 @@ class EntityTypes(models.Model):
         managed = False
         db_table = 'entity_types'
 
+# accounts/models.py
 class FileStorage(models.Model):
     file_id = models.AutoField(primary_key=True)
     entity_type = models.ForeignKey(EntityTypes, models.DO_NOTHING, blank=True, null=True)
     entity_id = models.IntegerField(blank=True, null=True)
-    file_url = models.FileField(upload_to=lambda instance, filename: creative_upload_path(instance, filename) if instance.file_type.type_name == 'creative' else proof_upload_path(instance, filename), blank=True, null=True)
+    file_url = models.FileField(blank=True, null=True)  # Убираем upload_to
     file_type = models.ForeignKey('FileTypes', models.DO_NOTHING, blank=True, null=True)
     uploaded_at = models.DateTimeField(blank=True, null=True)
 

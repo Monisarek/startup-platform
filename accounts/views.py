@@ -142,7 +142,7 @@ def profile(request):
 
     return render(request, 'accounts/profile.html', {'user': request.user})
 
-@login_required
+# accounts/views.py
 def create_startup(request):
     if request.method == 'POST':
         form = StartupForm(request.POST, request.FILES)
@@ -158,12 +158,11 @@ def create_startup(request):
                 raise ValueError("Статус 'Pending' не найден в базе данных.")
             startup.save()
 
-            # Явное сохранение логотипа
+            # Сохранение логотипа
             logo = form.cleaned_data.get('logo')
             if logo:
                 startup.planet_logo.save(f"startups/{startup.startup_id}/logos/{logo.name}", logo, save=True)
                 logger.info(f"Логотип сохранён: {startup.planet_logo.url}")
-                # Дополнительная проверка URL
                 if not startup.planet_logo.url.startswith('https://'):
                     logger.error(f"Логотип не сохранён в Yandex Object Storage: {startup.planet_logo.url}")
 
@@ -171,7 +170,6 @@ def create_startup(request):
             logger.info("=== Отправка стартапа на модерацию ===")
             logger.info(f"Стартап ID: {startup.startup_id}")
             
-            # Логотип
             if logo:
                 logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
                 logger.info(f"Путь сохранения логотипа: {startup.planet_logo.url}")
@@ -215,9 +213,9 @@ def create_startup(request):
             logger.info(f"AWS_S3_ENDPOINT_URL: {getattr(settings, 'AWS_S3_ENDPOINT_URL', 'Не задано')}")
             logger.info(f"AWS_DEFAULT_ACL: {getattr(settings, 'AWS_DEFAULT_ACL', 'Не задано')}")
 
-            # Проверка DEFAULT_FILE_STORAGE
+            # Проверка STORAGES
             from django.core.files.storage import default_storage
-            logger.info("=== Проверка DEFAULT_FILE_STORAGE ===")
+            logger.info("=== Проверка STORAGES ===")
             logger.info(f"STORAGES['default']['BACKEND']: {settings.STORAGES['default']['BACKEND']}")
             logger.info(f"default_storage: {default_storage.__class__.__name__}")
 
@@ -253,11 +251,11 @@ def create_startup(request):
                         file_type=creative_type,
                         uploaded_at=timezone.now()
                     )
-                    file_path = f"startups/{startup.startup_id}/creatives/{creative_file.name}"
+                    file_path = creative_upload_path(file_storage, creative_file.name)
                     logger.info(f"Сохранение креатива: {creative_file.name} в {file_path}")
                     file_storage.file_url.save(file_path, creative_file, save=True)
+                    file_storage.save()  # Явное сохранение объекта
                     logger.info(f"Креатив сохранён: {file_storage.file_url.url}")
-                    # Дополнительная проверка URL
                     if not file_storage.file_url.url.startswith('https://'):
                         logger.error(f"Креатив не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
 
@@ -275,11 +273,11 @@ def create_startup(request):
                         file_type=proof_type,
                         uploaded_at=timezone.now()
                     )
-                    file_path = f"startups/{startup.startup_id}/proofs/{proof_file.name}"
+                    file_path = proof_upload_path(file_storage, proof_file.name)
                     logger.info(f"Сохранение пруфа: {proof_file.name} в {file_path}")
                     file_storage.file_url.save(file_path, proof_file, save=True)
+                    file_storage.save()  # Явное сохранение объекта
                     logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
-                    # Дополнительная проверка URL
                     if not file_storage.file_url.url.startswith('https://'):
                         logger.error(f"Пруф не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
 
@@ -292,6 +290,7 @@ def create_startup(request):
         form = StartupForm()
     return render(request, 'accounts/create_startup.html', {'form': form})
 
+# accounts/views.py
 @login_required
 def edit_startup(request, startup_id):
     logger.debug(f"Request method: {request.method}")
@@ -314,12 +313,11 @@ def edit_startup(request, startup_id):
                 startup.current_step = int(request.POST.get('current_step'))
             startup.save()
 
-            # Явное сохранение логотипа
+            # Сохранение логотипа
             logo = form.cleaned_data.get('logo')
             if logo:
                 startup.planet_logo.save(f"startups/{startup.startup_id}/logos/{logo.name}", logo, save=True)
                 logger.info(f"Логотип сохранён: {startup.planet_logo.url}")
-                # Дополнительная проверка URL
                 if not startup.planet_logo.url.startswith('https://'):
                     logger.error(f"Логотип не сохранён в Yandex Object Storage: {startup.planet_logo.url}")
 
@@ -327,7 +325,6 @@ def edit_startup(request, startup_id):
             logger.info("=== Обновление стартапа ===")
             logger.info(f"Стартап ID: {startup.startup_id}")
             
-            # Логотип
             if logo:
                 logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
                 logger.info(f"Путь сохранения логотипа: {startup.planet_logo.url}")
@@ -371,10 +368,10 @@ def edit_startup(request, startup_id):
             logger.info(f"AWS_S3_ENDPOINT_URL: {getattr(settings, 'AWS_S3_ENDPOINT_URL', 'Не задано')}")
             logger.info(f"AWS_DEFAULT_ACL: {getattr(settings, 'AWS_DEFAULT_ACL', 'Не задано')}")
 
-            # Проверка DEFAULT_FILE_STORAGE
+            # Проверка STORAGES
             from django.core.files.storage import default_storage
-            logger.info("=== Проверка DEFAULT_FILE_STORAGE ===")
-            logger.info(f"DEFAULT_FILE_STORAGE class: {settings.DEFAULT_FILE_STORAGE}")
+            logger.info("=== Проверка STORAGES ===")
+            logger.info(f"STORAGES['default']['BACKEND']: {settings.STORAGES['default']['BACKEND']}")
             logger.info(f"default_storage: {default_storage.__class__.__name__}")
 
             # Проверка подключения к Yandex Object Storage
@@ -409,11 +406,11 @@ def edit_startup(request, startup_id):
                         file_type=creative_type,
                         uploaded_at=timezone.now()
                     )
-                    file_path = f"startups/{startup.startup_id}/creatives/{creative_file.name}"
+                    file_path = creative_upload_path(file_storage, creative_file.name)
                     logger.info(f"Сохранение креатива: {creative_file.name} в {file_path}")
                     file_storage.file_url.save(file_path, creative_file, save=True)
+                    file_storage.save()  # Явное сохранение объекта
                     logger.info(f"Креатив сохранён: {file_storage.file_url.url}")
-                    # Дополнительная проверка URL
                     if not file_storage.file_url.url.startswith('https://'):
                         logger.error(f"Креатив не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
 
@@ -431,11 +428,11 @@ def edit_startup(request, startup_id):
                         file_type=proof_type,
                         uploaded_at=timezone.now()
                     )
-                    file_path = f"startups/{startup.startup_id}/proofs/{proof_file.name}"
+                    file_path = proof_upload_path(file_storage, proof_file.name)
                     logger.info(f"Сохранение пруфа: {proof_file.name} в {file_path}")
                     file_storage.file_url.save(file_path, proof_file, save=True)
+                    file_storage.save()  # Явное сохранение объекта
                     logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
-                    # Дополнительная проверка URL
                     if not file_storage.file_url.url.startswith('https://'):
                         logger.error(f"Пруф не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
 
