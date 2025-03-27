@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from django.utils.text import slugify
-from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField  # Новый импорт для JSONField
 import os
 
 # Связанные модели
@@ -385,7 +385,7 @@ class Startups(models.Model):
     moderator_comment = models.TextField(blank=True, null=True)
     for_sale = models.BooleanField(default=False)
     current_step = models.IntegerField(default=1)
-    logo_urls = JSONField(blank=True, null=True, default=list)
+    logo_urls = JSONField(default=list)
     creatives_urls = JSONField(blank=True, null=True, default=list)
     proofs_urls = JSONField(blank=True, null=True, default=list)
     video_urls = JSONField(blank=True, null=True, default=list)
