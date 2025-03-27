@@ -58,6 +58,7 @@ class StartupForm(forms.ModelForm):
     agree_rules = forms.BooleanField(label='Согласен с правилами', required=True)
     agree_data_processing = forms.BooleanField(label='Согласен с обработкой данных', required=True)
     micro_investment_available = forms.BooleanField(label='Включить микро-инвестиции', required=False)
+    video = forms.FileField(required=False)  # Новое поле для видео
 
     class Meta:
         model = Startups
@@ -66,7 +67,7 @@ class StartupForm(forms.ModelForm):
             'planet_top_color', 'planet_middle_color', 'planet_bottom_color', 'logo',
             'only_invest', 'only_buy', 'both_mode', 'direction', 'stage',
             'agree_rules', 'agree_data_processing', 'micro_investment_available',
-            'creatives', 'proofs'  # Добавляем поля, чтобы форма их обрабатывала
+            'creatives', 'proofs', 'video'  # Добавляем поля, чтобы форма их обрабатывала
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),

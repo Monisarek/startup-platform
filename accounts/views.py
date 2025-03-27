@@ -2,20 +2,19 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.core.files.storage import FileSystemStorage
+from django.core.files.storage import default_storage
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
 import json
-from django.http import JsonResponse
 import logging
 import os
-import shutil
 from django.conf import settings
 from .forms import RegisterForm, LoginForm, StartupForm
 from .models import Users, Startups, ReviewStatuses, UserVotes, StartupTimeline, FileStorage, EntityTypes, FileTypes
-from .models import creative_upload_path, proof_upload_path  # Добавляем импорт функций
+from .models import creative_upload_path, proof_upload_path, video_upload_path
 
+logger = logging.getLogger(__name__)
 
 # Главная страница
 def home(request):
@@ -77,22 +76,14 @@ def startups_list(request):
 # Детали стартапа
 def startup_detail(request, startup_id):
     startup = get_object_or_404(Startups, startup_id=startup_id)
-    creatives = FileStorage.objects.filter(
-        entity_type__type_name='startup',
-        entity_id=startup_id,
-        file_type__type_name='creative'
-    )
-    proofs = FileStorage.objects.filter(
-        entity_type__type_name='startup',
-        entity_id=startup_id,
-        file_type__type_name='proof'
-    )
     timeline = StartupTimeline.objects.filter(startup=startup)
     average_rating = startup.sum_votes / startup.total_voters if startup.total_voters > 0 else 0
     return render(request, 'accounts/startup_detail.html', {
         'startup': startup,
-        'creatives': creatives,
-        'proofs': proofs,
+        'logo_urls': startup.logo_urls or [],
+        'creatives_urls': startup.creatives_urls or [],
+        'proofs_urls': startup.proofs_urls or [],
+        'video_urls': startup.video_urls or [],
         'timeline': timeline,
         'average_rating': average_rating
     })
@@ -109,24 +100,6 @@ def news(request):
 def legal(request):
     return render(request, 'accounts/legal.html')
 
-
-
-
-# Настройка логгера
-logger = logging.getLogger(__name__)
-
-import logging
-import os
-from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from django.utils import timezone
-from .forms import StartupForm
-from .models import Startups, ReviewStatuses, FileStorage, FileTypes, EntityTypes
-
-logger = logging.getLogger(__name__)
-
 # Профиль пользователя
 def profile(request):
     if not request.user.is_authenticated:
@@ -135,8 +108,6 @@ def profile(request):
 
     if request.method == 'POST' and 'avatar' in request.FILES:
         avatar = request.FILES['avatar']
-        # Используем default_storage вместо FileSystemStorage
-        from django.core.files.storage import default_storage
         filename = f'avatars/user_{request.user.user_id}_avatar{os.path.splitext(avatar.name)[1]}'
         file_path = default_storage.save(filename, avatar)
         request.user.profile_picture_url = default_storage.url(file_path)
@@ -145,7 +116,8 @@ def profile(request):
 
     return render(request, 'accounts/profile.html', {'user': request.user})
 
-# accounts/views.py
+# Создание стартапа
+@login_required
 def create_startup(request):
     if request.method == 'POST':
         form = StartupForm(request.POST, request.FILES)
@@ -161,13 +133,91 @@ def create_startup(request):
                 raise ValueError("Статус 'Pending' не найден в базе данных.")
             startup.save()
 
+            # Инициализация списков для URL
+            logo_urls = []
+            creatives_urls = []
+            proofs_urls = []
+            video_urls = []
+
             # Сохранение логотипа
             logo = form.cleaned_data.get('logo')
             if logo:
-                startup.planet_logo.save(f"startups/{startup.startup_id}/logos/{logo.name}", logo, save=True)
-                logger.info(f"Логотип сохранён: {startup.planet_logo.url}")
-                if not startup.planet_logo.url.startswith('https://'):
-                    logger.error(f"Логотип не сохранён в Yandex Object Storage: {startup.planet_logo.url}")
+                file_path = f"startups/{startup.startup_id}/logos/{logo.name}"
+                file_url = default_storage.save(file_path, logo)
+                logo_urls.append(default_storage.url(file_url))
+                logger.info(f"Логотип сохранён: {default_storage.url(file_url)}")
+
+            # Сохранение креативов
+            creatives = form.cleaned_data.get('creatives', [])
+            if creatives:
+                creative_type = FileTypes.objects.get(type_name='creative')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                for creative_file in creatives:
+                    if not hasattr(creative_file, 'name'):
+                        logger.warning(f"Пропущен креатив, так как это не файл: {creative_file}")
+                        continue
+                    file_path = creative_upload_path(FileStorage(entity_id=startup.startup_id), creative_file.name)
+                    file_url = default_storage.save(file_path, creative_file)
+                    creatives_urls.append(default_storage.url(file_url))
+                    file_storage = FileStorage(
+                        entity_type=entity_type,
+                        entity_id=startup.startup_id,
+                        file_type=creative_type,
+                        file_url=default_storage.url(file_url),
+                        uploaded_at=timezone.now(),
+                        startup=startup
+                    )
+                    file_storage.save()
+                    logger.info(f"Креатив сохранён: {default_storage.url(file_url)}")
+
+            # Сохранение пруфов
+            proofs = form.cleaned_data.get('proofs', [])
+            if proofs:
+                proof_type = FileTypes.objects.get(type_name='proof')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                for proof_file in proofs:
+                    if not hasattr(proof_file, 'name'):
+                        logger.warning(f"Пропущен пруф, так как это не файл: {proof_file}")
+                        continue
+                    file_path = proof_upload_path(FileStorage(entity_id=startup.startup_id), proof_file.name)
+                    file_url = default_storage.save(file_path, proof_file)
+                    proofs_urls.append(default_storage.url(file_url))
+                    file_storage = FileStorage(
+                        entity_type=entity_type,
+                        entity_id=startup.startup_id,
+                        file_type=proof_type,
+                        file_url=default_storage.url(file_url),
+                        uploaded_at=timezone.now(),
+                        startup=startup
+                    )
+                    file_storage.save()
+                    logger.info(f"Пруф сохранён: {default_storage.url(file_url)}")
+
+            # Сохранение видео
+            video = form.cleaned_data.get('video')
+            if video:
+                file_path = video_upload_path(FileStorage(entity_id=startup.startup_id), video.name)
+                file_url = default_storage.save(file_path, video)
+                video_urls.append(default_storage.url(file_url))
+                video_type, _ = FileTypes.objects.get_or_create(type_name='video')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                file_storage = FileStorage(
+                    entity_type=entity_type,
+                    entity_id=startup.startup_id,
+                    file_type=video_type,
+                    file_url=default_storage.url(file_url),
+                    uploaded_at=timezone.now(),
+                    startup=startup
+                )
+                file_storage.save()
+                logger.info(f"Видео сохранено: {default_storage.url(file_url)}")
+
+            # Сохранение списков URL в поля jsonb
+            startup.logo_urls = logo_urls
+            startup.creatives_urls = creatives_urls
+            startup.proofs_urls = proofs_urls
+            startup.video_urls = video_urls
+            startup.save()
 
             # Логирование информации о файлах
             logger.info("=== Отправка стартапа на модерацию ===")
@@ -175,12 +225,10 @@ def create_startup(request):
             
             if logo:
                 logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
-                logger.info(f"Путь сохранения логотипа: {startup.planet_logo.url}")
+                logger.info(f"Путь сохранения логотипа: {logo_urls[0] if logo_urls else 'Не сохранён'}")
             else:
                 logger.info("Логотип не загружен")
 
-            # Креативы
-            creatives = form.cleaned_data.get('creatives', [])
             if creatives:
                 logger.info(f"Креативы: {len(creatives)} файлов")
                 for i, creative_file in enumerate(creatives, 1):
@@ -191,8 +239,6 @@ def create_startup(request):
             else:
                 logger.info("Креативы не загружены")
 
-            # Пруфы
-            proofs = form.cleaned_data.get('proofs', [])
             if proofs:
                 logger.info(f"Пруфы: {len(proofs)} файлов")
                 for i, proof_file in enumerate(proofs, 1):
@@ -202,6 +248,12 @@ def create_startup(request):
                         logger.info(f"Пруф {i}: Неверный формат (не файл): {proof_file}")
             else:
                 logger.info("Пруфы не загружены")
+
+            if video:
+                logger.info(f"Видео: {video.name}, размер: {video.size} байт")
+                logger.info(f"Путь сохранения видео: {video_urls[0] if video_urls else 'Не сохранён'}")
+            else:
+                logger.info("Видео не загружено")
 
             # Логирование переменных окружения
             logger.info("=== Переменные окружения ===")
@@ -217,7 +269,6 @@ def create_startup(request):
             logger.info(f"AWS_DEFAULT_ACL: {getattr(settings, 'AWS_DEFAULT_ACL', 'Не задано')}")
 
             # Проверка STORAGES
-            from django.core.files.storage import default_storage
             logger.info("=== Проверка STORAGES ===")
             logger.info(f"STORAGES['default']['BACKEND']: {settings.STORAGES['default']['BACKEND']}")
             logger.info(f"default_storage: {default_storage.__class__.__name__}")
@@ -240,50 +291,6 @@ def create_startup(request):
             except Exception as e:
                 logger.error(f"Ошибка подключения к Yandex Object Storage: {str(e)}", exc_info=True)
 
-            # Обработка креативов
-            if creatives:
-                creative_type = FileTypes.objects.get(type_name='creative')
-                entity_type = EntityTypes.objects.get(type_name='startup')
-                for creative_file in creatives:
-                    if not hasattr(creative_file, 'name'):
-                        logger.warning(f"Пропущен креатив, так как это не файл: {creative_file}")
-                        continue
-                    file_storage = FileStorage(
-                        entity_type=entity_type,
-                        entity_id=startup.startup_id,
-                        file_type=creative_type,
-                        uploaded_at=timezone.now()
-                    )
-                    file_path = creative_upload_path(file_storage, creative_file.name)
-                    logger.info(f"Сохранение креатива: {creative_file.name} в {file_path}")
-                    file_storage.file_url.save(file_path, creative_file, save=True)
-                    file_storage.save()  # Явное сохранение объекта
-                    logger.info(f"Креатив сохранён: {file_storage.file_url.url}")
-                    if not file_storage.file_url.url.startswith('https://'):
-                        logger.error(f"Креатив не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
-
-            # Обработка пруфов
-            if proofs:
-                proof_type = FileTypes.objects.get(type_name='proof')
-                entity_type = EntityTypes.objects.get(type_name='startup')
-                for proof_file in proofs:
-                    if not hasattr(proof_file, 'name'):
-                        logger.warning(f"Пропущен пруф, так как это не файл: {proof_file}")
-                        continue
-                    file_storage = FileStorage(
-                        entity_type=entity_type,
-                        entity_id=startup.startup_id,
-                        file_type=proof_type,
-                        uploaded_at=timezone.now()
-                    )
-                    file_path = proof_upload_path(file_storage, proof_file.name)
-                    logger.info(f"Сохранение пруфа: {proof_file.name} в {file_path}")
-                    file_storage.file_url.save(file_path, proof_file, save=True)
-                    file_storage.save()  # Явное сохранение объекта
-                    logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
-                    if not file_storage.file_url.url.startswith('https://'):
-                        logger.error(f"Пруф не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
-
             messages.success(request, f'Стартап "{startup.title}" успешно создан и отправлен на модерацию!')
             return redirect('profile')
         else:
@@ -293,7 +300,7 @@ def create_startup(request):
         form = StartupForm()
     return render(request, 'accounts/create_startup.html', {'form': form})
 
-# accounts/views.py
+# Редактирование стартапа
 @login_required
 def edit_startup(request, startup_id):
     logger.debug(f"Request method: {request.method}")
@@ -316,13 +323,93 @@ def edit_startup(request, startup_id):
                 startup.current_step = int(request.POST.get('current_step'))
             startup.save()
 
+            # Инициализация списков для URL (сохраняем существующие)
+            logo_urls = startup.logo_urls or []
+            creatives_urls = startup.creatives_urls or []
+            proofs_urls = startup.proofs_urls or []
+            video_urls = startup.video_urls or []
+
             # Сохранение логотипа
             logo = form.cleaned_data.get('logo')
             if logo:
-                startup.planet_logo.save(f"startups/{startup.startup_id}/logos/{logo.name}", logo, save=True)
-                logger.info(f"Логотип сохранён: {startup.planet_logo.url}")
-                if not startup.planet_logo.url.startswith('https://'):
-                    logger.error(f"Логотип не сохранён в Yandex Object Storage: {startup.planet_logo.url}")
+                file_path = f"startups/{startup.startup_id}/logos/{logo.name}"
+                file_url = default_storage.save(file_path, logo)
+                logo_urls = [default_storage.url(file_url)]  # Заменяем старый логотип
+                logger.info(f"Логотип сохранён: {default_storage.url(file_url)}")
+
+            # Сохранение креативов
+            creatives = form.cleaned_data.get('creatives', [])
+            if creatives:
+                creative_type = FileTypes.objects.get(type_name='creative')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                creatives_urls = []  # Очищаем старые креативы
+                for creative_file in creatives:
+                    if not hasattr(creative_file, 'name'):
+                        logger.warning(f"Пропущен креатив, так как это не файл: {creative_file}")
+                        continue
+                    file_path = creative_upload_path(FileStorage(entity_id=startup.startup_id), creative_file.name)
+                    file_url = default_storage.save(file_path, creative_file)
+                    creatives_urls.append(default_storage.url(file_url))
+                    file_storage = FileStorage(
+                        entity_type=entity_type,
+                        entity_id=startup.startup_id,
+                        file_type=creative_type,
+                        file_url=default_storage.url(file_url),
+                        uploaded_at=timezone.now(),
+                        startup=startup
+                    )
+                    file_storage.save()
+                    logger.info(f"Креатив сохранён: {default_storage.url(file_url)}")
+
+            # Сохранение пруфов
+            proofs = form.cleaned_data.get('proofs', [])
+            if proofs:
+                proof_type = FileTypes.objects.get(type_name='proof')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                proofs_urls = []  # Очищаем старые пруфы
+                for proof_file in proofs:
+                    if not hasattr(proof_file, 'name'):
+                        logger.warning(f"Пропущен пруф, так как это не файл: {proof_file}")
+                        continue
+                    file_path = proof_upload_path(FileStorage(entity_id=startup.startup_id), proof_file.name)
+                    file_url = default_storage.save(file_path, proof_file)
+                    proofs_urls.append(default_storage.url(file_url))
+                    file_storage = FileStorage(
+                        entity_type=entity_type,
+                        entity_id=startup.startup_id,
+                        file_type=proof_type,
+                        file_url=default_storage.url(file_url),
+                        uploaded_at=timezone.now(),
+                        startup=startup
+                    )
+                    file_storage.save()
+                    logger.info(f"Пруф сохранён: {default_storage.url(file_url)}")
+
+            # Сохранение видео
+            video = form.cleaned_data.get('video')
+            if video:
+                file_path = video_upload_path(FileStorage(entity_id=startup.startup_id), video.name)
+                file_url = default_storage.save(file_path, video)
+                video_urls = [default_storage.url(file_url)]  # Заменяем старое видео
+                video_type, _ = FileTypes.objects.get_or_create(type_name='video')
+                entity_type = EntityTypes.objects.get(type_name='startup')
+                file_storage = FileStorage(
+                    entity_type=entity_type,
+                    entity_id=startup.startup_id,
+                    file_type=video_type,
+                    file_url=default_storage.url(file_url),
+                    uploaded_at=timezone.now(),
+                    startup=startup
+                )
+                file_storage.save()
+                logger.info(f"Видео сохранено: {default_storage.url(file_url)}")
+
+            # Сохранение списков URL в поля jsonb
+            startup.logo_urls = logo_urls
+            startup.creatives_urls = creatives_urls
+            startup.proofs_urls = proofs_urls
+            startup.video_urls = video_urls
+            startup.save()
 
             # Логирование информации о файлах
             logger.info("=== Обновление стартапа ===")
@@ -330,12 +417,10 @@ def edit_startup(request, startup_id):
             
             if logo:
                 logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
-                logger.info(f"Путь сохранения логотипа: {startup.planet_logo.url}")
+                logger.info(f"Путь сохранения логотипа: {logo_urls[0] if logo_urls else 'Не сохранён'}")
             else:
                 logger.info("Логотип не загружен")
 
-            # Креативы
-            creatives = form.cleaned_data.get('creatives', [])
             if creatives:
                 logger.info(f"Креативы: {len(creatives)} файлов")
                 for i, creative_file in enumerate(creatives, 1):
@@ -346,8 +431,6 @@ def edit_startup(request, startup_id):
             else:
                 logger.info("Креативы не загружены")
 
-            # Пруфы
-            proofs = form.cleaned_data.get('proofs', [])
             if proofs:
                 logger.info(f"Пруфы: {len(proofs)} файлов")
                 for i, proof_file in enumerate(proofs, 1):
@@ -357,6 +440,12 @@ def edit_startup(request, startup_id):
                         logger.info(f"Пруф {i}: Неверный формат (не файл): {proof_file}")
             else:
                 logger.info("Пруфы не загружены")
+
+            if video:
+                logger.info(f"Видео: {video.name}, размер: {video.size} байт")
+                logger.info(f"Путь сохранения видео: {video_urls[0] if video_urls else 'Не сохранён'}")
+            else:
+                logger.info("Видео не загружено")
 
             # Логирование переменных окружения
             logger.info("=== Переменные окружения ===")
@@ -372,7 +461,6 @@ def edit_startup(request, startup_id):
             logger.info(f"AWS_DEFAULT_ACL: {getattr(settings, 'AWS_DEFAULT_ACL', 'Не задано')}")
 
             # Проверка STORAGES
-            from django.core.files.storage import default_storage
             logger.info("=== Проверка STORAGES ===")
             logger.info(f"STORAGES['default']['BACKEND']: {settings.STORAGES['default']['BACKEND']}")
             logger.info(f"default_storage: {default_storage.__class__.__name__}")
@@ -395,50 +483,6 @@ def edit_startup(request, startup_id):
             except Exception as e:
                 logger.error(f"Ошибка подключения к Yandex Object Storage: {str(e)}", exc_info=True)
 
-            # Обработка креативов
-            if creatives:
-                creative_type = FileTypes.objects.get(type_name='creative')
-                entity_type = EntityTypes.objects.get(type_name='startup')
-                for creative_file in creatives:
-                    if not hasattr(creative_file, 'name'):
-                        logger.warning(f"Пропущен креатив, так как это не файл: {creative_file}")
-                        continue
-                    file_storage = FileStorage(
-                        entity_type=entity_type,
-                        entity_id=startup.startup_id,
-                        file_type=creative_type,
-                        uploaded_at=timezone.now()
-                    )
-                    file_path = creative_upload_path(file_storage, creative_file.name)
-                    logger.info(f"Сохранение креатива: {creative_file.name} в {file_path}")
-                    file_storage.file_url.save(file_path, creative_file, save=True)
-                    file_storage.save()  # Явное сохранение объекта
-                    logger.info(f"Креатив сохранён: {file_storage.file_url.url}")
-                    if not file_storage.file_url.url.startswith('https://'):
-                        logger.error(f"Креатив не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
-
-            # Обработка пруфов
-            if proofs:
-                proof_type = FileTypes.objects.get(type_name='proof')
-                entity_type = EntityTypes.objects.get(type_name='startup')
-                for proof_file in proofs:
-                    if not hasattr(proof_file, 'name'):
-                        logger.warning(f"Пропущен пруф, так как это не файл: {proof_file}")
-                        continue
-                    file_storage = FileStorage(
-                        entity_type=entity_type,
-                        entity_id=startup.startup_id,
-                        file_type=proof_type,
-                        uploaded_at=timezone.now()
-                    )
-                    file_path = proof_upload_path(file_storage, proof_file.name)
-                    logger.info(f"Сохранение пруфа: {proof_file.name} в {file_path}")
-                    file_storage.file_url.save(file_path, proof_file, save=True)
-                    file_storage.save()  # Явное сохранение объекта
-                    logger.info(f"Пруф сохранён: {file_storage.file_url.url}")
-                    if not file_storage.file_url.url.startswith('https://'):
-                        logger.error(f"Пруф не сохранён в Yandex Object Storage: {file_storage.file_url.url}")
-
             messages.success(request, f'Стартап "{startup.title}" успешно отредактирован и отправлен на модерацию!')
             return redirect('profile')
         else:
@@ -448,7 +492,7 @@ def edit_startup(request, startup_id):
         form = StartupForm(instance=startup)
     return render(request, 'accounts/edit_startup.html', {'form': form, 'startup': startup})
 
-# Исправленная панель модератора
+# Панель модератора
 def moderator_dashboard(request):
     if not request.user.is_authenticated or request.user.role.role_name != 'moderator':
         messages.error(request, 'У вас нет прав для этого действия.')

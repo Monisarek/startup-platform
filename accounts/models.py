@@ -1,8 +1,10 @@
+# accounts/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from django.utils.text import slugify
+from django.contrib.postgres.fields import JSONField
 import os
 
 # Связанные модели
@@ -25,16 +27,6 @@ class ActivityLog(models.Model):
         managed = False
         db_table = 'activity_log'
 
-
-def logo_upload_path(instance, filename):
-    # Получаем расширение файла
-    ext = os.path.splitext(filename)[1]
-    # Укорачиваем имя файла до 50 символов
-    base_name = slugify(os.path.splitext(filename)[0])[:50]
-    # Формируем новое имя файла
-    new_filename = f"logo_{instance.startup_id}{ext}"
-    return f'startups/{instance.startup_id}/logos/{new_filename}'
-
 def creative_upload_path(instance, filename):
     ext = os.path.splitext(filename)[1]
     base_name = slugify(os.path.splitext(filename)[0])[:50]
@@ -46,6 +38,12 @@ def proof_upload_path(instance, filename):
     base_name = slugify(os.path.splitext(filename)[0])[:50]
     new_filename = f"proof_{instance.entity_id}_{base_name}{ext}"
     return f'startups/{instance.entity_id}/proofs/{new_filename}'
+
+def video_upload_path(instance, filename):
+    ext = os.path.splitext(filename)[1]
+    base_name = slugify(os.path.splitext(filename)[0])[:50]
+    new_filename = f"video_{instance.entity_id}_{base_name}{ext}"
+    return f'startups/{instance.entity_id}/videos/{new_filename}'
 
 class ChatConversations(models.Model):
     conversation_id = models.AutoField(primary_key=True)
@@ -101,14 +99,14 @@ class EntityTypes(models.Model):
         managed = False
         db_table = 'entity_types'
 
-# accounts/models.py
 class FileStorage(models.Model):
     file_id = models.AutoField(primary_key=True)
     entity_type = models.ForeignKey(EntityTypes, models.DO_NOTHING, blank=True, null=True)
     entity_id = models.IntegerField(blank=True, null=True)
-    file_url = models.FileField(blank=True, null=True)  # Убираем upload_to
+    file_url = models.CharField(max_length=255, blank=True, null=True)  # Изменяем на CharField
     file_type = models.ForeignKey('FileTypes', models.DO_NOTHING, blank=True, null=True)
     uploaded_at = models.DateTimeField(blank=True, null=True)
+    startup = models.ForeignKey('Startups', models.CASCADE, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -355,7 +353,6 @@ class ReviewStatuses(models.Model):
     def __str__(self):
         return self.status_name
 
-
 class Startups(models.Model):
     startup_id = models.AutoField(primary_key=True)
     owner = models.ForeignKey('Users', models.DO_NOTHING, blank=True, null=True, db_column='owner_id')
@@ -372,12 +369,10 @@ class Startups(models.Model):
     planet_top_color = models.CharField(max_length=7, default='#FFFFFF')
     planet_middle_color = models.CharField(max_length=7, default='#FFFFFF')
     planet_bottom_color = models.CharField(max_length=7, default='#FFFFFF')
-    planet_logo = models.ImageField(upload_to=logo_upload_path, null=True, blank=True)
     status = models.CharField(max_length=20, default='pending')
     status_id = models.ForeignKey(ReviewStatuses, models.DO_NOTHING, blank=True, null=True, db_column='status_id', default=3)
     only_invest = models.BooleanField(default=False)
     only_buy = models.BooleanField(default=False)
-    logo_url = models.CharField(max_length=255, blank=True, null=True)
     both_mode = models.BooleanField(default=False)
     total_invested = models.DecimalField(max_digits=19, decimal_places=4, blank=True, null=True, default=0)
     info_url = models.CharField(max_length=255, blank=True, null=True)
@@ -386,20 +381,18 @@ class Startups(models.Model):
     micro_investment_available = models.BooleanField(default=False)
     total_voters = models.IntegerField(default=0)
     sum_votes = models.IntegerField(default=0)
-    is_edited = models.BooleanField(default=False)  # Новое поле
+    is_edited = models.BooleanField(default=False)
     moderator_comment = models.TextField(blank=True, null=True)
     for_sale = models.BooleanField(default=False)
-    current_step = models.IntegerField(default=1)  # Добавлено новое поле
+    current_step = models.IntegerField(default=1)
+    logo_urls = JSONField(blank=True, null=True, default=list)
+    creatives_urls = JSONField(blank=True, null=True, default=list)
+    proofs_urls = JSONField(blank=True, null=True, default=list)
+    video_urls = JSONField(blank=True, null=True, default=list)
 
     class Meta:
         managed = False
         db_table = 'startups'
-
-    def save(self, *args, **kwargs):
-        # Убедимся, что папка существует перед сохранением
-        if self.planet_logo and not self.startup_id:
-            super().save(*args, **kwargs)  # Сначала сохраняем, чтобы получить startup_id
-        super().save(*args, **kwargs)
 
 class ModeratorReviews(models.Model):
     review_id = models.AutoField(primary_key=True)
@@ -481,5 +474,3 @@ class Users(AbstractBaseUser):
 
     def has_module_perms(self, app_label):
         return self.is_staff
-    
-    

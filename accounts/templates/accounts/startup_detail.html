@@ -1,6 +1,9 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
+{% load widget_tweaks %}
+
 {% block title %}{{ startup.title }} - Подробности{% endblock %}
+
 {% block content %}
 <link rel="stylesheet" href="{% static 'accounts/css/startup_form.css' %}">
 
@@ -8,192 +11,192 @@
     <div class="form-header">
         <h2>{{ startup.title }}</h2>
     </div>
-    
-    <form method="get" enctype="multipart/form-data" id="startupForm" style="pointer-events: none;">
-        <div class="form-row">
-            <div class="form-column">
-                <!-- Название -->
-                <div class="form-group">
-                    <label>Название стартапа *</label>
-                    <p>{{ startup.title }}</p>
-                </div>
-                
-                <!-- Планета -->
-                <div class="planet-container">
-                    <div class="planet">
-                        <div class="planet-segment segment-top" style="background-color: {{ startup.planet_top_color }};"></div>
-                        <div class="planet-segment segment-middle" style="background-color: {{ startup.planet_middle_color }};"></div>
-                        <div class="planet-segment segment-bottom" style="background-color: {{ startup.planet_bottom_color }};"></div>
-                    </div>
-                    <div class="logo-overlay">
-                        {% if startup.planet_logo %}
-                            <img src="{{ startup.planet_logo.url }}" alt="Логотип" class="logo-preview" id="logoPreview">
-                        {% else %}
-                            <div class="logo-preview"></div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <!-- Цвета планеты -->
-                <div class="color-picker-container">
-                    <div class="form-group">
-                        <label>Цвет верха планеты *</label>
-                        <p>{{ startup.planet_top_color }}</p>
-                    </div>
-                    <div class="form-group">
-                        <label>Цвет середины планеты *</label>
-                        <p>{{ startup.planet_middle_color }}</p>
-                    </div>
-                    <div class="form-group">
-                        <label>Цвет низа планеты *</label>
-                        <p>{{ startup.planet_bottom_color }}</p>
-                    </div>
-                </div>
-                
-                <div class="small-text" style="text-align: center;">Нажмите на планету</div>
+
+    <div class="form-row">
+        <div class="form-column">
+            <!-- Название -->
+            <div class="form-group">
+                <label>Название стартапа</label>
+                <p>{{ startup.title }}</p>
             </div>
-            
-            <div class="form-column">
-                <!-- Режим -->
-                <div class="mode-buttons">
-                    <p><strong>Режим:</strong> 
-                        {% if startup.only_invest %}Только инвестиции
-                        {% elif startup.only_buy %}Только выкуп
-                        {% elif startup.both_mode %}Оба варианта
-                        {% else %}Не указано{% endif %}
-                    </p>
+
+            <!-- Планета -->
+            <div class="planet-container">
+                <div class="planet">
+                    <div class="planet-segment segment-top" style="background-color: {{ startup.planet_top_color }};"></div>
+                    <div class="planet-segment segment-middle" style="background-color: {{ startup.planet_middle_color }};"></div>
+                    <div class="planet-segment segment-bottom" style="background-color: {{ startup.planet_bottom_color }};"></div>
                 </div>
-                
-                <!-- Цель финансирования -->
-                <div class="form-group">
-                    <label>Цель финансирования *</label>
-                    <p>{{ startup.funding_goal }} USD</p>
-                </div>
-                
-                <!-- Описание -->
-                <div class="form-group">
-                    <label>Описание *</label>
-                    <p>{{ startup.description }}</p>
-                </div>
-                
-                <!-- Направление -->
-                <div class="form-group">
-                    <label>Направление *</label>
-                    <p>{{ startup.direction.direction_name }}</p>
-                </div>
-                
-                <!-- Стадия -->
-                <div class="form-group">
-                    <label>Стадия *</label>
-                    <p>{{ startup.stage.stage_name }}</p>
-                </div>
-                
-                <!-- Средний рейтинг -->
-                <div class="form-group">
-                    <label>Средний рейтинг</label>
-                    <p>{{ average_rating|floatformat:"1" }} / 5</p>
-                </div>
-                
-                <!-- Креативы -->
-                <div class="upload-section">
-                    <div class="upload-title">Креативы</div>
-                    {% for creative in creatives %}
-                        <img src="{{ creative.file_url.url }}" alt="Креатив" style="max-width: 200px; margin: 10px;">
-                    {% empty %}
-                        <p>Креативы отсутствуют.</p>
-                    {% endfor %}
-                    <div class="small-text">Допустимые форматы: JPG, PNG, GIF, MP4, MOV</div>
+                <div class="logo-overlay">
+                    {% if logo_urls %}
+                        <img src="{{ logo_urls.0 }}" alt="Логотип" class="logo-preview" id="logoPreview">
+                    {% else %}
+                        <div class="logo-preview"></div>
+                    {% endif %}
                 </div>
             </div>
-        </div>
-        
-        <!-- Таймлайн -->
-        <div class="timeline" id="timeline">
-            {% for event in timeline %}
-                <div class="timeline-step" onclick="selectStep({{ forloop.counter }})">
-                    <div class="step-number {% if forloop.counter <= startup.current_step %}active{% endif %}" id="step{{ forloop.counter }}">{{ forloop.counter }}</div>
-                    <div class="step-text">{{ event.title }}</div>
+
+            <!-- Цвета планеты -->
+            <div class="color-picker-container">
+                <div class="form-group">
+                    <label>Цвет верха планеты</label>
+                    <p>{{ startup.planet_top_color }}</p>
                 </div>
-            {% endfor %}
-        </div>
-        
-        <!-- Описание этапов -->
-        <div id="step-descriptions">
-            {% for event in timeline %}
-                <div class="timeline-description-container" id="step-description-{{ forloop.counter }}">
-                    <div class="timeline-description-header">
-                        <div class="timeline-description-title">{{ event.title }}</div>
-                        {% if forloop.counter == startup.current_step %}
-                            <button type="button" class="btn-select-current">Мы здесь</button>
-                        {% endif %}
-                    </div>
-                    <p>{{ event.description }}</p>
+                <div class="form-group">
+                    <label>Цвет середины планеты</label>
+                    <p>{{ startup.planet_middle_color }}</p>
                 </div>
-            {% endfor %}
-        </div>
-        
-        <!-- Отображение креативов -->
-        <div class="creatives-section">
-            <h3>Креативы</h3>
-            {% if creatives %}
-                {% for creative in creatives %}
-                    <img src="{{ creative.file_url.url }}" alt="Креатив" style="max-width: 200px; margin: 10px;">
-                {% endfor %}
-            {% else %}
-                <p>Креативы отсутствуют.</p>
-            {% endif %}
+                <div class="form-group">
+                    <label>Цвет низа планеты</label>
+                    <p>{{ startup.planet_bottom_color }}</p>
+                </div>
+            </div>
+
+            <div class="small-text" style="text-align: center;">Планета стартапа</div>
         </div>
 
-        <!-- Отображение пруфов -->
-        <div class="proofs-section">
-            <h3>Пруфы</h3>
-            {% if proofs %}
-                {% for proof in proofs %}
-                    <a href="{{ proof.file_url.url }}" target="_blank" style="display: block; margin: 10px;">Скачать пруф: {{ proof.file_url.name }}</a>
-                {% endfor %}
-            {% else %}
-                <p>Пруфы отсутствуют.</p>
-            {% endif %}
-        </div>
+        <div class="form-column">
+            <!-- Режим -->
+            <div class="mode-buttons">
+                <p><strong>Режим:</strong>
+                    {% if startup.only_invest %}Только инвестиции
+                    {% elif startup.only_buy %}Только выкуп
+                    {% elif startup.both_mode %}Оба варианта
+                    {% else %}Не указано{% endif %}
+                </p>
+            </div>
 
+            <!-- Цель финансирования -->
+            <div class="form-group">
+                <label>Цель финансирования</label>
+                <p>{{ startup.funding_goal }} USD</p>
+            </div>
 
-        <!-- Финансовые показатели -->
-        <div class="financial-section">
-            <h3>Финансовые показатели</h3>
+            <!-- Описание -->
+            <div class="form-group">
+                <label>Описание</label>
+                <p>{{ startup.description }}</p>
+            </div>
+
+            <!-- Направление -->
+            <div class="form-group">
+                <label>Направление</label>
+                <p>{{ startup.direction.direction_name }}</p>
+            </div>
+
+            <!-- Стадия -->
+            <div class="form-group">
+                <label>Стадия</label>
+                <p>{{ startup.stage.stage_name }}</p>
+            </div>
+
+            <!-- Средний рейтинг -->
+            <div class="form-group">
+                <label>Средний рейтинг</label>
+                <p>{{ average_rating|floatformat:"1" }} / 5</p>
+            </div>
+
+            <!-- Креативы -->
             <div class="upload-section">
-                <div class="upload-title">Пруфы</div>
-                {% for proof in proofs %}
-                    <a href="{{ proof.file_url.url }}" target="_blank">{{ proof.file_url.name }}</a><br>
+                <div class="upload-title">Креативы</div>
+                {% for url in creatives_urls %}
+                    <img src="{{ url }}" alt="Креатив" style="max-width: 200px; margin: 10px;">
                 {% empty %}
-                    <p>Пруфы отсутствуют.</p>
+                    <p>Креативы отсутствуют.</p>
                 {% endfor %}
-                <div class="small-text">Допустимые форматы: PDF, DOC, DOCX, XLS, XLSX, TXT</div>
+                <div class="small-text">Допустимые форматы: JPG, PNG, GIF, MP4, MOV</div>
             </div>
-            <div class="checkbox-option">
-                <p><strong>Включить возможность инвестиций разных инвесторов:</strong> {{ startup.micro_investment_available|yesno:"Да,Нет" }}</p>
+
+            <!-- Видео -->
+            <div class="upload-section">
+                <div class="upload-title">Видео</div>
+                {% for url in video_urls %}
+                    <video controls style="max-width: 400px; margin: 10px;">
+                        <source src="{{ url }}" type="video/mp4">
+                        Ваш браузер не поддерживает тег видео.
+                    </video>
+                {% empty %}
+                    <p>Видео отсутствуют.</p>
+                {% endfor %}
+                <div class="small-text">Допустимые форматы: MP4, MOV</div>
             </div>
         </div>
-        
-        <!-- Согласия -->
-        <div class="agreement-section">
-            <h3>Согласия и настройки</h3>
-            <div class="form-group">
-                <p><strong>Согласен с правилами:</strong> {{ startup.agree_rules|yesno:"Да,Нет" }}</p>
+    </div>
+
+    <!-- Таймлайн -->
+    <div class="timeline" id="timeline">
+        {% for event in timeline %}
+            <div class="timeline-step" onclick="selectStep({{ forloop.counter }})">
+                <div class="step-number {% if forloop.counter <= startup.current_step %}active{% endif %}" id="step{{ forloop.counter }}">{{ forloop.counter }}</div>
+                <div class="step-text">{{ event.title }}</div>
             </div>
-            <div class="form-group">
-                <p><strong>Согласен с обработкой данных:</strong> {{ startup.agree_data_processing|yesno:"Да,Нет" }}</p>
+        {% empty %}
+            <div class="timeline-step">
+                <div class="step-number active" id="step1">1</div>
+                <div class="step-text">Создание стартапа</div>
             </div>
+        {% endfor %}
+    </div>
+
+    <!-- Описание этапов -->
+    <div id="step-descriptions">
+        {% for event in timeline %}
+            <div class="timeline-description-container {% if forloop.first %}active{% endif %}" id="step-description-{{ forloop.counter }}">
+                <div class="timeline-description-header">
+                    <div class="timeline-description-title">{{ event.title }}</div>
+                    {% if forloop.counter == startup.current_step %}
+                        <button type="button" class="btn-select-current">Мы здесь</button>
+                    {% endif %}
+                </div>
+                <p>{{ event.description }}</p>
+            </div>
+        {% empty %}
+            <div class="timeline-description-container active" id="step-description-1">
+                <div class="timeline-description-header">
+                    <div class="timeline-description-title">Этап 1: Создание стартапа</div>
+                    <button type="button" class="btn-select-current">Мы здесь</button>
+                </div>
+                <p>Описание этапа отсутствует.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Финансовые показатели -->
+    <div class="financial-section">
+        <h3>Финансовые показатели</h3>
+        <div class="upload-section">
+            <div class="upload-title">Пруфы</div>
+            {% for url in proofs_urls %}
+                <a href="{{ url }}" target="_blank" style="display: block; margin: 10px;">Скачать пруф</a>
+            {% empty %}
+                <p>Пруфы отсутствуют.</p>
+            {% endfor %}
+            <div class="small-text">Допустимые форматы: PDF, DOC, DOCX, XLS, XLSX, TXT</div>
         </div>
-    </form>
-    
+        <div class="checkbox-option">
+            <p><strong>Включить возможность инвестиций разных инвесторов:</strong> {{ startup.micro_investment_available|yesno:"Да,Нет" }}</p>
+        </div>
+    </div>
+
+    <!-- Согласия -->
+    <div class="agreement-section">
+        <h3>Согласия и настройки</h3>
+        <div class="form-group">
+            <p><strong>Согласен с правилами:</strong> {{ startup.agree_rules|yesno:"Да,Нет" }}</p>
+        </div>
+        <div class="form-group">
+            <p><strong>Согласен с обработкой данных:</strong> {{ startup.agree_data_processing|yesno:"Да,Нет" }}</p>
+        </div>
+    </div>
+
     <!-- Кнопки -->
-    <div class="action-buttons">
-        <a href="{% url 'startups_list' %}" class="btn btn-back">Назад к списку</a>
+    <div class="action-buttons" style="margin-top: 20px; text-align: center;">
+        <a href="{% url 'startups_list' %}" class="submit-button" style="background-color: #6b7280;">Назад к списку</a>
         {% if request.user == startup.owner %}
-            <a href="{% url 'edit_startup' startup.startup_id %}" class="btn btn-edit">Редактировать</a>
+            <a href="{% url 'edit_startup' startup.startup_id %}" class="submit-button" style="background-color: #2563eb;">Редактировать</a>
         {% endif %}
     </div>
-    
+
     <!-- Комментарий модератора -->
     {% if request.user == startup.owner or request.user.is_staff %}
         {% if startup.moderator_comment %}
@@ -221,8 +224,32 @@
         margin: 0;
         color: #4a5568;
     }
-    form#startupForm {
-        pointer-events: none;
+    .timeline-step {
+        cursor: pointer;
+    }
+    .step-number {
+        width: 30px;
+        height: 30px;
+        background-color: #ccc;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+    .step-number.active {
+        background-color: #16a34a;
+    }
+    .timeline-description-container {
+        display: none;
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+    }
+    .timeline-description-container.active {
+        display: block;
     }
     .btn-select-current {
         background-color: #16a34a;
@@ -233,4 +260,17 @@
         cursor: default;
     }
 </style>
+
+<script>
+    function selectStep(stepNumber) {
+        document.querySelectorAll('.timeline-description-container').forEach(container => {
+            container.classList.remove('active');
+        });
+        document.getElementById(`step-description-${stepNumber}`).classList.add('active');
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+        selectStep(1);
+    });
+</script>
 {% endblock %}
