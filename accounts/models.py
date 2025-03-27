@@ -247,16 +247,15 @@ class StartupStages(models.Model):
         managed = False
         db_table = 'startup_stages'
 
-# accounts/models.py
-
 class StartupTimeline(models.Model):
-    timeline_id = models.AutoField(primary_key=True)
-    startup = models.ForeignKey('Startups', on_delete=models.CASCADE)
-    step_number = models.IntegerField(default=1)  # Добавили поле step_number
-    title = models.CharField(max_length=255)
-    description = models.TextField()
+    event_id = models.AutoField(primary_key=True)
+    startup = models.ForeignKey('Startups', models.DO_NOTHING, blank=True, null=True)
+    title = models.CharField(max_length=255, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    event_date = models.DateTimeField(blank=True, null=True)
 
     class Meta:
+        managed = False
         db_table = 'startup_timeline'
 
 class StartupVotes(models.Model):
@@ -385,7 +384,7 @@ class Startups(models.Model):
     is_edited = models.BooleanField(default=False)
     moderator_comment = models.TextField(blank=True, null=True)
     for_sale = models.BooleanField(default=False)
-    step_number = models.IntegerField(default=1)  # Переименовали current_step в step_number
+    step_number = models.IntegerField(default=1)
     logo_urls = JSONField(default=list)
     creatives_urls = JSONField(blank=True, null=True, default=list)
     proofs_urls = JSONField(blank=True, null=True, default=list)

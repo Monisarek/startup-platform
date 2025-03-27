@@ -64,15 +64,42 @@ def user_logout(request):
     messages.success(request, 'Вы успешно вышли из системы.')
     return redirect('home')
 
-# Список одобренных стартапов
+# accounts/views.py
+
 def startups_list(request):
-    approved_startups = Startups.objects.filter(status='approved')
+    # Получаем одобренные стартапы, сортируем по дате создания (новые первыми)
+    approved_startups = Startups.objects.filter(status='approved').order_by('-created_at')
+    
+    # Создаём список словарей для передачи в шаблон
+    startups_data = []
     for startup in approved_startups:
-        if startup.total_voters > 0:
-            startup.average_rating = float(startup.sum_votes) / startup.total_voters
-        else:
-            startup.average_rating = 0.0
-    return render(request, 'accounts/startups_list.html', {'approved_startups': approved_startups})
+        # Вычисляем средний рейтинг
+        average_rating = (float(startup.sum_votes) / startup.total_voters) if startup.total_voters > 0 else 0.0
+        
+        # Генерируем URL для логотипа, если он есть
+        logo_url = None
+        if startup.logo_urls and len(startup.logo_urls) > 0:
+            try:
+                logo_url = default_storage.url(f"startups/{startup.startup_id}/logos/{startup.logo_urls[0]}_")
+                logger.info(f"Сгенерирован URL для логотипа стартапа {startup.startup_id}: {logo_url}")
+            except Exception as e:
+                logger.error(f"Ошибка при генерации URL для логотипа стартапа {startup.startup_id}: {str(e)}")
+        
+        # Формируем словарь с данными стартапа
+        startups_data.append({
+            'startup_id': startup.startup_id,
+            'title': startup.title,
+            'description': startup.description,
+            'logo_url': logo_url,
+            'funding_goal': startup.funding_goal,
+            'amount_raised': startup.amount_raised,
+            'percent_amount': startup.percent_amount,
+            'created_at': startup.created_at,
+            'average_rating': average_rating,
+        })
+    
+    # Передаём данные в шаблон
+    return render(request, 'accounts/startups_list.html', {'startups': startups_data})
 
 # accounts/views.py (фрагмент)
 
@@ -121,10 +148,6 @@ def profile(request):
 
     return render(request, 'accounts/profile.html', {'user': request.user})
 
-# accounts/views.py (полные функции create_startup и edit_startup)
-
-# accounts/views.py (полная функция create_startup)
-
 @login_required
 def create_startup(request):
     if request.method == 'POST':
@@ -139,17 +162,15 @@ def create_startup(request):
                 startup.status_id = ReviewStatuses.objects.get(status_name='Pending')
             except ReviewStatuses.DoesNotExist:
                 raise ValueError("Статус 'Pending' не найден в базе данных.")
-            startup.step_number = 1  # Заменили current_step на step_number
+            startup.step_number = 1  # Используем step_number
             startup.save()
 
             # Создаём начальный таймлайн, если его нет
             if not StartupTimeline.objects.filter(startup=startup).exists():
                 StartupTimeline.objects.create(
                     startup=startup,
-                    step_number=1,  # Добавили step_number
                     title="Создание стартапа",
                     description="Стартап создан и отправлен на модерацию."
-                    # Убрали step_number, так как его нет в модели
                 )
 
             # Инициализация списков для ID файлов
