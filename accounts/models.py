@@ -385,7 +385,7 @@ class Startups(models.Model):
     is_edited = models.BooleanField(default=False)
     moderator_comment = models.TextField(blank=True, null=True)
     for_sale = models.BooleanField(default=False)
-    current_step = models.IntegerField(default=1)
+    step_number = models.IntegerField(default=1)  # Переименовали current_step в step_number
     logo_urls = JSONField(default=list)
     creatives_urls = JSONField(blank=True, null=True, default=list)
     proofs_urls = JSONField(blank=True, null=True, default=list)
