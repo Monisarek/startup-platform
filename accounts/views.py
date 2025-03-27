@@ -123,6 +123,8 @@ def profile(request):
 
 # accounts/views.py (полные функции create_startup и edit_startup)
 
+# accounts/views.py (полная функция create_startup)
+
 @login_required
 def create_startup(request):
     if request.method == 'POST':
@@ -137,16 +139,17 @@ def create_startup(request):
                 startup.status_id = ReviewStatuses.objects.get(status_name='Pending')
             except ReviewStatuses.DoesNotExist:
                 raise ValueError("Статус 'Pending' не найден в базе данных.")
-            startup.current_step = 1  # Устанавливаем начальный этап
+            startup.step_number = 1  # Заменили current_step на step_number
             startup.save()
 
             # Создаём начальный таймлайн, если его нет
             if not StartupTimeline.objects.filter(startup=startup).exists():
                 StartupTimeline.objects.create(
                     startup=startup,
-                    step_number=1,
+                    step_number=1,  # Добавили step_number
                     title="Создание стартапа",
                     description="Стартап создан и отправлен на модерацию."
+                    # Убрали step_number, так как его нет в модели
                 )
 
             # Инициализация списков для ID файлов
@@ -335,6 +338,8 @@ def create_startup(request):
         form = StartupForm()
     return render(request, 'accounts/create_startup.html', {'form': form})
 
+# accounts/views.py (полная функция edit_startup)
+
 @login_required
 def edit_startup(request, startup_id):
     logger.debug(f"Request method: {request.method}")
@@ -353,15 +358,16 @@ def edit_startup(request, startup_id):
             startup.status = 'pending'
             startup.is_edited = True
             startup.updated_at = timezone.now()
-            if 'current_step' in request.POST:
-                new_step = int(request.POST.get('current_step'))
-                startup.current_step = new_step
+            if 'step_number' in request.POST:  # Заменили current_step на step_number
+                new_step = int(request.POST.get('step_number'))
+                startup.step_number = new_step  # Заменили current_step на step_number
 
                 # Добавляем новый этап в таймлайн, если его нет
-                if not StartupTimeline.objects.filter(startup=startup, step_number=new_step).exists():
+                # Проверяем по startup.step_number, так как в StartupTimeline нет step_number
+                if not StartupTimeline.objects.filter(startup=startup, title=f"Этап {new_step}").exists():
                     StartupTimeline.objects.create(
                         startup=startup,
-                        step_number=new_step,
+                        step_number=new_step,  # Добавили step_number
                         title=f"Этап {new_step}",
                         description=f"Стартап перешёл на этап {new_step}."
                     )

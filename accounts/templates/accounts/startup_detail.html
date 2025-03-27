@@ -2,6 +2,7 @@
 {% load static %}
 {% load widget_tweaks %}
 {% load file_tags %}
+{% load timeline_filters %}  <!-- Загружаем кастомный фильтр -->
 
 {% block title %}{{ startup.title }} - Подробности{% endblock %}
 
@@ -169,8 +170,8 @@
     <!-- Таймлайн -->
     <div class="timeline" id="timeline">
         {% for event in timeline %}
-            <div class="timeline-step" onclick="selectStep({{ event.step_number }})">
-                <div class="step-number {% if event.step_number <= startup.current_step %}active{% endif %}" id="step{{ event.step_number }}">{{ event.step_number }}</div>
+            <div class="timeline-step" onclick="selectStep({{ event.title|extract_step_number }})">
+                <div class="step-number {% if event.title|extract_step_number <= startup.step_number %}active{% endif %}" id="step{{ event.title|extract_step_number }}">{{ event.title|extract_step_number }}</div>
                 <div class="step-text">{{ event.title }}</div>
             </div>
         {% empty %}
@@ -184,10 +185,10 @@
     <!-- Описание этапов -->
     <div id="step-descriptions">
         {% for event in timeline %}
-            <div class="timeline-description-container {% if event.step_number == startup.current_step %}active{% endif %}" id="step-description-{{ event.step_number }}">
+            <div class="timeline-description-container {% if event.title|extract_step_number == startup.step_number %}active{% endif %}" id="step-description-{{ event.title|extract_step_number }}">
                 <div class="timeline-description-header">
                     <div class="timeline-description-title">{{ event.title }}</div>
-                    {% if event.step_number == startup.current_step %}
+                    {% if event.title|extract_step_number == startup.step_number %}
                         <button type="button" class="btn-select-current">Мы здесь</button>
                     {% endif %}
                 </div>
@@ -323,7 +324,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', function() {
-        selectStep({{ startup.current_step|default:1 }});
+        selectStep({{ startup.step_number|default:1 }});
     });
 </script>
 {% endblock %}

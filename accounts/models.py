@@ -247,15 +247,16 @@ class StartupStages(models.Model):
         managed = False
         db_table = 'startup_stages'
 
+# accounts/models.py
+
 class StartupTimeline(models.Model):
-    event_id = models.AutoField(primary_key=True)
-    startup = models.ForeignKey('Startups', models.DO_NOTHING, blank=True, null=True)
-    title = models.CharField(max_length=255, blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
-    event_date = models.DateTimeField(blank=True, null=True)
+    timeline_id = models.AutoField(primary_key=True)
+    startup = models.ForeignKey('Startups', on_delete=models.CASCADE)
+    step_number = models.IntegerField(default=1)  # Добавили поле step_number
+    title = models.CharField(max_length=255)
+    description = models.TextField()
 
     class Meta:
-        managed = False
         db_table = 'startup_timeline'
 
 class StartupVotes(models.Model):
