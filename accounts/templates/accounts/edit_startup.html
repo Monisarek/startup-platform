@@ -139,7 +139,7 @@
         <div class="timeline" id="timeline">
             {% for event in startup.timeline.all %}
                 <div class="timeline-step" onclick="selectStep({{ forloop.counter }})">
-                    <div class="step-number {% if forloop.counter <= startup.current_step %}active{% endif %}" id="step{{ forloop.counter }}">{{ forloop.counter }}</div>
+                    <div class="step-number {% if forloop.counter <= startup.step_number %}active{% endif %}" id="step{{ forloop.counter }}">{{ forloop.counter }}</div>
                     <div class="step-text">{{ event.title }}</div>
                 </div>
             {% empty %}
@@ -153,7 +153,7 @@
                 <div class="timeline-description-container" id="step-description-{{ forloop.counter }}">
                     <div class="timeline-description-header">
                         <div class="timeline-description-title">{{ event.title }}</div>
-                        {% if forloop.counter == startup.current_step %}
+                        {% if forloop.counter == startup.step_number %}
                             <button type="button" class="btn-select-current" onclick="setCurrentStep({{ forloop.counter }})">Мы здесь</button>
                         {% endif %}
                     </div>
@@ -192,7 +192,7 @@
         <input type="hidden" name="both_mode" id="id_both_mode" value="{{ startup.both_mode|yesno:'true,false' }}">
         
         <!-- Скрытое поле для текущего этапа -->
-        <input type="hidden" name="current_step" id="current_step" value="{{ startup.current_step|default:'1' }}">
+        <input type="hidden" name="step_number" id="step_number" value="{{ startup.step_number|default:'1' }}">
         
         <!-- Согласия -->
         <div class="agreement-section">
@@ -301,7 +301,7 @@
     }
     
     function setCurrentStep(stepNumber) {
-        document.getElementById('current_step').value = stepNumber;
+        document.getElementById('step_number').value = stepNumber;
         const timelineLength = {{ startup.timeline.all|length|default:0 }};
         for (let i = 1; i <= timelineLength; i++) {
             const stepElement = document.getElementById(`step${i}`);
@@ -414,7 +414,7 @@
         const timelineLength = {{ startup.timeline.all|length|default:0 }};
         if (timelineLength > 0) {
             selectStep(1);
-            setCurrentStep({{ startup.current_step|default:'1' }});
+            setCurrentStep({{ startup.step_number|default:'1' }});
         }
     });
 </script>

@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from django.utils.text import slugify
-from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField  # Новый импорт для JSONField
 import os
 
 # Связанные модели
@@ -103,7 +103,7 @@ class FileStorage(models.Model):
     file_id = models.AutoField(primary_key=True)
     entity_type = models.ForeignKey(EntityTypes, models.DO_NOTHING, blank=True, null=True)
     entity_id = models.IntegerField(blank=True, null=True)
-    file_url = models.CharField(max_length=255, blank=True, null=True)  # Изменяем на CharField
+    file_url = models.CharField(max_length=1000, blank=True, null=True)  # Изменяем на CharField
     file_type = models.ForeignKey('FileTypes', models.DO_NOTHING, blank=True, null=True)
     uploaded_at = models.DateTimeField(blank=True, null=True)
     startup = models.ForeignKey('Startups', models.CASCADE, blank=True, null=True)
@@ -384,8 +384,8 @@ class Startups(models.Model):
     is_edited = models.BooleanField(default=False)
     moderator_comment = models.TextField(blank=True, null=True)
     for_sale = models.BooleanField(default=False)
-    current_step = models.IntegerField(default=1)
-    logo_urls = JSONField(blank=True, null=True, default=list)
+    step_number = models.IntegerField(default=1)
+    logo_urls = JSONField(default=list)
     creatives_urls = JSONField(blank=True, null=True, default=list)
     proofs_urls = JSONField(blank=True, null=True, default=list)
     video_urls = JSONField(blank=True, null=True, default=list)

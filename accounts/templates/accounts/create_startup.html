@@ -267,7 +267,7 @@
         {{ form.both_mode }}
 
         <!-- Скрытое поле для текущего этапа -->
-        <input type="hidden" name="current_step" id="current_step" value="1">
+        <input type="hidden" name="step_number" id="step_number" value="1">
 
         <!-- Согласия -->
         <div class="agreement-section">
@@ -381,7 +381,7 @@
 
     // Функция для установки текущего этапа
     function setCurrentStep(stepNumber) {
-        document.getElementById('current_step').value = stepNumber;
+        document.getElementById('step_number').value = stepNumber;
         for (let i = 1; i <= 5; i++) {
             const stepElement = document.getElementById(`step${i}`);
             if (i <= stepNumber) {

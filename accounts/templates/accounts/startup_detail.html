@@ -1,6 +1,8 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
 {% load widget_tweaks %}
+{% load file_tags %}
+{% load timeline_filters %}  <!-- Загружаем кастомный фильтр -->
 
 {% block title %}{{ startup.title }} - Подробности{% endblock %}
 
@@ -29,7 +31,7 @@
                 </div>
                 <div class="logo-overlay">
                     {% if logo_urls %}
-                        <img src="{{ logo_urls.0 }}" alt="Логотип" class="logo-preview" id="logoPreview">
+                        <img src="{% get_file_url_tag logo_urls.0 startup.startup_id 'logo' %}" alt="Логотип" class="logo-preview" id="logoPreview">
                     {% else %}
                         <div class="logo-preview"></div>
                     {% endif %}
@@ -66,10 +68,46 @@
                 </p>
             </div>
 
+            <!-- Статус -->
+            <div class="form-group">
+                <label>Статус</label>
+                <p>{{ startup.status|title }}</p>
+            </div>
+
+            <!-- Доступен ли для продажи -->
+            <div class="form-group">
+                <label>Доступен для продажи</label>
+                <p>{{ startup.for_sale|yesno:"Да,Нет" }}</p>
+            </div>
+
             <!-- Цель финансирования -->
             <div class="form-group">
                 <label>Цель финансирования</label>
                 <p>{{ startup.funding_goal }} USD</p>
+            </div>
+
+            <!-- Собранная сумма -->
+            <div class="form-group">
+                <label>Собранная сумма</label>
+                <p>{{ startup.amount_raised|default:"0" }} USD</p>
+            </div>
+
+            <!-- Процент собранных средств -->
+            <div class="form-group">
+                <label>Процент собранных средств</label>
+                <p>{{ startup.percent_amount|default:"0" }}%</p>
+            </div>
+
+            <!-- Общая сумма инвестиций -->
+            <div class="form-group">
+                <label>Общая сумма инвестиций</label>
+                <p>{{ startup.total_invested|default:"0" }} USD</p>
+            </div>
+
+            <!-- Оценка стоимости -->
+            <div class="form-group">
+                <label>Оценка стоимости</label>
+                <p>{{ startup.valuation|default:"0" }} USD</p>
             </div>
 
             <!-- Описание -->
@@ -81,13 +119,19 @@
             <!-- Направление -->
             <div class="form-group">
                 <label>Направление</label>
-                <p>{{ startup.direction.direction_name }}</p>
+                <p>{{ direction_name }}</p>
             </div>
 
             <!-- Стадия -->
             <div class="form-group">
                 <label>Стадия</label>
-                <p>{{ startup.stage.stage_name }}</p>
+                <p>{{ stage_name }}</p>
+            </div>
+
+            <!-- Владелец -->
+            <div class="form-group">
+                <label>Владелец</label>
+                <p>{{ owner_email }}</p>
             </div>
 
             <!-- Средний рейтинг -->
@@ -100,7 +144,7 @@
             <div class="upload-section">
                 <div class="upload-title">Креативы</div>
                 {% for url in creatives_urls %}
-                    <img src="{{ url }}" alt="Креатив" style="max-width: 200px; margin: 10px;">
+                    <img src="{% get_file_url_tag url startup.startup_id 'creative' %}" alt="Креатив" style="max-width: 200px; margin: 10px;">
                 {% empty %}
                     <p>Креативы отсутствуют.</p>
                 {% endfor %}
@@ -112,7 +156,7 @@
                 <div class="upload-title">Видео</div>
                 {% for url in video_urls %}
                     <video controls style="max-width: 400px; margin: 10px;">
-                        <source src="{{ url }}" type="video/mp4">
+                        <source src="{% get_file_url_tag url startup.startup_id 'video' %}" type="video/mp4">
                         Ваш браузер не поддерживает тег видео.
                     </video>
                 {% empty %}
@@ -126,12 +170,12 @@
     <!-- Таймлайн -->
     <div class="timeline" id="timeline">
         {% for event in timeline %}
-            <div class="timeline-step" onclick="selectStep({{ forloop.counter }})">
-                <div class="step-number {% if forloop.counter <= startup.current_step %}active{% endif %}" id="step{{ forloop.counter }}">{{ forloop.counter }}</div>
+            <div class="timeline-step" onclick="selectStep({{ event.title|extract_step_number }})">
+                <div class="step-number {% if event.title|extract_step_number <= startup.step_number %}active{% endif %}" id="step{{ event.title|extract_step_number }}">{{ event.title|extract_step_number }}</div>
                 <div class="step-text">{{ event.title }}</div>
             </div>
         {% empty %}
-            <div class="timeline-step">
+            <div class="timeline-step" onclick="selectStep(1)">
                 <div class="step-number active" id="step1">1</div>
                 <div class="step-text">Создание стартапа</div>
             </div>
@@ -141,10 +185,10 @@
     <!-- Описание этапов -->
     <div id="step-descriptions">
         {% for event in timeline %}
-            <div class="timeline-description-container {% if forloop.first %}active{% endif %}" id="step-description-{{ forloop.counter }}">
+            <div class="timeline-description-container {% if event.title|extract_step_number == startup.step_number %}active{% endif %}" id="step-description-{{ event.title|extract_step_number }}">
                 <div class="timeline-description-header">
                     <div class="timeline-description-title">{{ event.title }}</div>
-                    {% if forloop.counter == startup.current_step %}
+                    {% if event.title|extract_step_number == startup.step_number %}
                         <button type="button" class="btn-select-current">Мы здесь</button>
                     {% endif %}
                 </div>
@@ -167,34 +211,36 @@
         <div class="upload-section">
             <div class="upload-title">Пруфы</div>
             {% for url in proofs_urls %}
-                <a href="{{ url }}" target="_blank" style="display: block; margin: 10px;">Скачать пруф</a>
+                <a href="{% get_file_url_tag url startup.startup_id 'proof' %}" target="_blank" style="display: block; margin: 10px;">Скачать пруф</a>
             {% empty %}
                 <p>Пруфы отсутствуют.</p>
             {% endfor %}
             <div class="small-text">Допустимые форматы: PDF, DOC, DOCX, XLS, XLSX, TXT</div>
+        </div>
+        <div class="upload-section">
+            <div class="upload-title">Питч-дек</div>
+            {% if startup.pitch_deck_url %}
+                <a href="{{ startup.pitch_deck_url }}" target="_blank" style="display: block; margin: 10px;">Скачать питч-дек</a>
+            {% else %}
+                <p>Питч-дек отсутствует.</p>
+            {% endif %}
         </div>
         <div class="checkbox-option">
             <p><strong>Включить возможность инвестиций разных инвесторов:</strong> {{ startup.micro_investment_available|yesno:"Да,Нет" }}</p>
         </div>
     </div>
 
-    <!-- Согласия -->
-    <div class="agreement-section">
-        <h3>Согласия и настройки</h3>
+    <!-- Дополнительная информация -->
+    <div class="additional-info-section">
+        <h3>Дополнительная информация</h3>
         <div class="form-group">
-            <p><strong>Согласен с правилами:</strong> {{ startup.agree_rules|yesno:"Да,Нет" }}</p>
+            <label>Ссылка на информацию</label>
+            {% if startup.info_url %}
+                <a href="{{ startup.info_url }}" target="_blank">{{ startup.info_url }}</a>
+            {% else %}
+                <p>Ссылка отсутствует.</p>
+            {% endif %}
         </div>
-        <div class="form-group">
-            <p><strong>Согласен с обработкой данных:</strong> {{ startup.agree_data_processing|yesno:"Да,Нет" }}</p>
-        </div>
-    </div>
-
-    <!-- Кнопки -->
-    <div class="action-buttons" style="margin-top: 20px; text-align: center;">
-        <a href="{% url 'startups_list' %}" class="submit-button" style="background-color: #6b7280;">Назад к списку</a>
-        {% if request.user == startup.owner %}
-            <a href="{% url 'edit_startup' startup.startup_id %}" class="submit-button" style="background-color: #2563eb;">Редактировать</a>
-        {% endif %}
     </div>
 
     <!-- Комментарий модератора -->
@@ -206,6 +252,14 @@
             </div>
         {% endif %}
     {% endif %}
+
+    <!-- Кнопки -->
+    <div class="action-buttons" style="margin-top: 20px; text-align: center;">
+        <a href="{% url 'startups_list' %}" class="submit-button" style="background-color: #6b7280;">Назад к списку</a>
+        {% if request.user == startup.owner %}
+            <a href="{% url 'edit_startup' startup.startup_id %}" class="submit-button" style="background-color: #2563eb;">Редактировать</a>
+        {% endif %}
+    </div>
 </div>
 
 <style>
@@ -270,7 +324,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', function() {
-        selectStep(1);
+        selectStep({{ startup.step_number|default:1 }});
     });
 </script>
 {% endblock %}
