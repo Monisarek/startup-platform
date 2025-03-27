@@ -103,7 +103,7 @@ class FileStorage(models.Model):
     file_id = models.AutoField(primary_key=True)
     entity_type = models.ForeignKey(EntityTypes, models.DO_NOTHING, blank=True, null=True)
     entity_id = models.IntegerField(blank=True, null=True)
-    file_url = models.CharField(max_length=255, blank=True, null=True)  # Изменяем на CharField
+    file_url = models.CharField(max_length=1000, blank=True, null=True)  # Изменяем на CharField
     file_type = models.ForeignKey('FileTypes', models.DO_NOTHING, blank=True, null=True)
     uploaded_at = models.DateTimeField(blank=True, null=True)
     startup = models.ForeignKey('Startups', models.CASCADE, blank=True, null=True)
