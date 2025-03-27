@@ -13,6 +13,7 @@ from django.conf import settings
 from .forms import RegisterForm, LoginForm, StartupForm
 from .models import Users, Startups, ReviewStatuses, UserVotes, StartupTimeline, FileStorage, EntityTypes, FileTypes
 from .models import creative_upload_path, proof_upload_path, video_upload_path
+import uuid  # Добавляем импорт uuid
 
 logger = logging.getLogger(__name__)
 
@@ -133,19 +134,23 @@ def create_startup(request):
                 raise ValueError("Статус 'Pending' не найден в базе данных.")
             startup.save()
 
-            # Инициализация списков для URL
-            logo_urls = []
-            creatives_urls = []
-            proofs_urls = []
-            video_urls = []
+            # Инициализация списков для ID файлов
+            logo_ids = []
+            creatives_ids = []
+            proofs_ids = []
+            video_ids = []
 
             # Сохранение логотипа
             logo = form.cleaned_data.get('logo')
             if logo:
-                file_path = f"startups/{startup.startup_id}/logos/{logo.name}"
-                file_url = default_storage.save(file_path, logo)
-                logo_urls.append(default_storage.url(file_url))
-                logger.info(f"Логотип сохранён: {default_storage.url(file_url)}")
+                # Генерируем уникальный ID для файла
+                logo_id = str(uuid.uuid4())
+                # Формируем путь с использованием ID
+                file_path = f"startups/{startup.startup_id}/logos/{logo_id}_{logo.name}"
+                # Загружаем файл в Yandex Object Storage
+                default_storage.save(file_path, logo)
+                logo_ids.append(logo_id)
+                logger.info(f"Логотип сохранён с ID: {logo_id}")
 
             # Сохранение креативов
             creatives = form.cleaned_data.get('creatives', [])
@@ -156,19 +161,24 @@ def create_startup(request):
                     if not hasattr(creative_file, 'name'):
                         logger.warning(f"Пропущен креатив, так как это не файл: {creative_file}")
                         continue
-                    file_path = creative_upload_path(FileStorage(entity_id=startup.startup_id), creative_file.name)
-                    file_url = default_storage.save(file_path, creative_file)
-                    creatives_urls.append(default_storage.url(file_url))
+                    # Генерируем уникальный ID для файла
+                    creative_id = str(uuid.uuid4())
+                    # Формируем путь с использованием ID
+                    file_path = f"startups/{startup.startup_id}/creatives/{creative_id}_{creative_file.name}"
+                    # Загружаем файл в Yandex Object Storage
+                    default_storage.save(file_path, creative_file)
+                    creatives_ids.append(creative_id)
+                    # Сохранение в FileStorage
                     file_storage = FileStorage(
                         entity_type=entity_type,
                         entity_id=startup.startup_id,
                         file_type=creative_type,
-                        file_url=default_storage.url(file_url),
+                        file_url=creative_id,  # Сохраняем только ID вместо URL
                         uploaded_at=timezone.now(),
                         startup=startup
                     )
                     file_storage.save()
-                    logger.info(f"Креатив сохранён: {default_storage.url(file_url)}")
+                    logger.info(f"Креатив сохранён с ID: {creative_id}")
 
             # Сохранение пруфов
             proofs = form.cleaned_data.get('proofs', [])
@@ -179,44 +189,54 @@ def create_startup(request):
                     if not hasattr(proof_file, 'name'):
                         logger.warning(f"Пропущен пруф, так как это не файл: {proof_file}")
                         continue
-                    file_path = proof_upload_path(FileStorage(entity_id=startup.startup_id), proof_file.name)
-                    file_url = default_storage.save(file_path, proof_file)
-                    proofs_urls.append(default_storage.url(file_url))
+                    # Генерируем уникальный ID для файла
+                    proof_id = str(uuid.uuid4())
+                    # Формируем путь с использованием ID
+                    file_path = f"startups/{startup.startup_id}/proofs/{proof_id}_{proof_file.name}"
+                    # Загружаем файл в Yandex Object Storage
+                    default_storage.save(file_path, proof_file)
+                    proofs_ids.append(proof_id)
+                    # Сохранение в FileStorage
                     file_storage = FileStorage(
                         entity_type=entity_type,
                         entity_id=startup.startup_id,
                         file_type=proof_type,
-                        file_url=default_storage.url(file_url),
+                        file_url=proof_id,  # Сохраняем только ID вместо URL
                         uploaded_at=timezone.now(),
                         startup=startup
                     )
                     file_storage.save()
-                    logger.info(f"Пруф сохранён: {default_storage.url(file_url)}")
+                    logger.info(f"Пруф сохранён с ID: {proof_id}")
 
             # Сохранение видео
             video = form.cleaned_data.get('video')
             if video:
-                file_path = video_upload_path(FileStorage(entity_id=startup.startup_id), video.name)
-                file_url = default_storage.save(file_path, video)
-                video_urls.append(default_storage.url(file_url))
+                # Генерируем уникальный ID для файла
+                video_id = str(uuid.uuid4())
+                # Формируем путь с использованием ID
+                file_path = f"startups/{startup.startup_id}/videos/{video_id}_{video.name}"
+                # Загружаем файл в Yandex Object Storage
+                default_storage.save(file_path, video)
+                video_ids.append(video_id)
+                # Сохранение в FileStorage
                 video_type, _ = FileTypes.objects.get_or_create(type_name='video')
                 entity_type = EntityTypes.objects.get(type_name='startup')
                 file_storage = FileStorage(
                     entity_type=entity_type,
                     entity_id=startup.startup_id,
                     file_type=video_type,
-                    file_url=default_storage.url(file_url),
+                    file_url=video_id,  # Сохраняем только ID вместо URL
                     uploaded_at=timezone.now(),
                     startup=startup
                 )
                 file_storage.save()
-                logger.info(f"Видео сохранено: {default_storage.url(file_url)}")
+                logger.info(f"Видео сохранено с ID: {video_id}")
 
-            # Сохранение списков URL в поля jsonb
-            startup.logo_urls = logo_urls
-            startup.creatives_urls = creatives_urls
-            startup.proofs_urls = proofs_urls
-            startup.video_urls = video_urls
+            # Сохранение списков ID в поля jsonb
+            startup.logo_urls = logo_ids
+            startup.creatives_urls = creatives_ids
+            startup.proofs_urls = proofs_ids
+            startup.video_urls = video_ids
             startup.save()
 
             # Логирование информации о файлах
@@ -225,7 +245,7 @@ def create_startup(request):
             
             if logo:
                 logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
-                logger.info(f"Путь сохранения логотипа: {logo_urls[0] if logo_urls else 'Не сохранён'}")
+                logger.info(f"ID логотипа: {logo_ids[0] if logo_ids else 'Не сохранён'}")
             else:
                 logger.info("Логотип не загружен")
 
@@ -251,7 +271,7 @@ def create_startup(request):
 
             if video:
                 logger.info(f"Видео: {video.name}, размер: {video.size} байт")
-                logger.info(f"Путь сохранения видео: {video_urls[0] if video_urls else 'Не сохранён'}")
+                logger.info(f"ID видео: {video_ids[0] if video_ids else 'Не сохранён'}")
             else:
                 logger.info("Видео не загружено")
 
@@ -323,92 +343,111 @@ def edit_startup(request, startup_id):
                 startup.current_step = int(request.POST.get('current_step'))
             startup.save()
 
-            # Инициализация списков для URL (сохраняем существующие)
-            logo_urls = startup.logo_urls or []
-            creatives_urls = startup.creatives_urls or []
-            proofs_urls = startup.proofs_urls or []
-            video_urls = startup.video_urls or []
+            # Инициализация списков для ID (сохраняем существующие, если не загружаются новые)
+            logo_ids = startup.logo_urls or []
+            creatives_ids = startup.creatives_urls or []
+            proofs_ids = startup.proofs_urls or []
+            video_ids = startup.video_urls or []
 
             # Сохранение логотипа
             logo = form.cleaned_data.get('logo')
             if logo:
-                file_path = f"startups/{startup.startup_id}/logos/{logo.name}"
-                file_url = default_storage.save(file_path, logo)
-                logo_urls = [default_storage.url(file_url)]  # Заменяем старый логотип
-                logger.info(f"Логотип сохранён: {default_storage.url(file_url)}")
+                # Генерируем уникальный ID для файла
+                logo_id = str(uuid.uuid4())
+                # Формируем путь с использованием ID
+                file_path = f"startups/{startup.startup_id}/logos/{logo_id}_{logo.name}"
+                # Загружаем файл в Yandex Object Storage
+                default_storage.save(file_path, logo)
+                logo_ids = [logo_id]  # Заменяем старый логотип
+                logger.info(f"Логотип сохранён с ID: {logo_id}")
 
             # Сохранение креативов
             creatives = form.cleaned_data.get('creatives', [])
             if creatives:
                 creative_type = FileTypes.objects.get(type_name='creative')
                 entity_type = EntityTypes.objects.get(type_name='startup')
-                creatives_urls = []  # Очищаем старые креативы
+                creatives_ids = []  # Очищаем старые креативы
                 for creative_file in creatives:
                     if not hasattr(creative_file, 'name'):
                         logger.warning(f"Пропущен креатив, так как это не файл: {creative_file}")
                         continue
-                    file_path = creative_upload_path(FileStorage(entity_id=startup.startup_id), creative_file.name)
-                    file_url = default_storage.save(file_path, creative_file)
-                    creatives_urls.append(default_storage.url(file_url))
+                    # Генерируем уникальный ID для файла
+                    creative_id = str(uuid.uuid4())
+                    # Формируем путь с использованием ID
+                    file_path = f"startups/{startup.startup_id}/creatives/{creative_id}_{creative_file.name}"
+                    # Загружаем файл в Yandex Object Storage
+                    default_storage.save(file_path, creative_file)
+                    creatives_ids.append(creative_id)
+                    # Сохранение в FileStorage
                     file_storage = FileStorage(
                         entity_type=entity_type,
                         entity_id=startup.startup_id,
                         file_type=creative_type,
-                        file_url=default_storage.url(file_url),
+                        file_url=creative_id,  # Сохраняем только ID вместо URL
                         uploaded_at=timezone.now(),
                         startup=startup
                     )
                     file_storage.save()
-                    logger.info(f"Креатив сохранён: {default_storage.url(file_url)}")
+                    logger.info(f"Креатив сохранён с ID: {creative_id}")
 
             # Сохранение пруфов
             proofs = form.cleaned_data.get('proofs', [])
             if proofs:
                 proof_type = FileTypes.objects.get(type_name='proof')
                 entity_type = EntityTypes.objects.get(type_name='startup')
-                proofs_urls = []  # Очищаем старые пруфы
+                proofs_ids = []  # Очищаем старые пруфы
                 for proof_file in proofs:
                     if not hasattr(proof_file, 'name'):
                         logger.warning(f"Пропущен пруф, так как это не файл: {proof_file}")
                         continue
-                    file_path = proof_upload_path(FileStorage(entity_id=startup.startup_id), proof_file.name)
-                    file_url = default_storage.save(file_path, proof_file)
-                    proofs_urls.append(default_storage.url(file_url))
+                    # Генерируем уникальный ID для файла
+                    proof_id = str(uuid.uuid4())
+                    # Формируем путь с использованием ID
+                    file_path = f"startups/{startup.startup_id}/proofs/{proof_id}_{proof_file.name}"
+                    # Загружаем файл в Yandex Object Storage
+                    default_storage.save(file_path, proof_file)
+                    proofs_ids.append(proof_id)
+                    # Сохранение в FileStorage
                     file_storage = FileStorage(
                         entity_type=entity_type,
                         entity_id=startup.startup_id,
                         file_type=proof_type,
-                        file_url=default_storage.url(file_url),
+                        file_url=proof_id,  # Сохраняем только ID вместо URL
                         uploaded_at=timezone.now(),
                         startup=startup
                     )
                     file_storage.save()
-                    logger.info(f"Пруф сохранён: {default_storage.url(file_url)}")
+                    logger.info(f"Пруф сохранён с ID: {proof_id}")
 
             # Сохранение видео
             video = form.cleaned_data.get('video')
             if video:
-                file_path = video_upload_path(FileStorage(entity_id=startup.startup_id), video.name)
-                file_url = default_storage.save(file_path, video)
-                video_urls = [default_storage.url(file_url)]  # Заменяем старое видео
+                # Генерируем уникальный ID для файла
+                video_id = str(uuid.uuid4())
+                # Формируем путь с использованием ID
+                file_path = f"startups/{startup.startup_id}/videos/{video_id}_{video.name}"
+                # Загружаем файл в Yandex Object Storage
+                default_storage.save(file_path, video)
+                video_ids = [video_id]  # Заменяем старое видео
+                # Сохранение в FileStorage
                 video_type, _ = FileTypes.objects.get_or_create(type_name='video')
                 entity_type = EntityTypes.objects.get(type_name='startup')
                 file_storage = FileStorage(
                     entity_type=entity_type,
                     entity_id=startup.startup_id,
                     file_type=video_type,
-                    file_url=default_storage.url(file_url),
+                    file_url=video_id,  # Сохраняем только ID вместо URL
                     uploaded_at=timezone.now(),
                     startup=startup
                 )
                 file_storage.save()
-                logger.info(f"Видео сохранено: {default_storage.url(file_url)}")
+                logger.info(f"Видео сохранено с ID: {video_id}")
 
-            # Сохранение списков URL в поля jsonb
-            startup.logo_urls = logo_urls
-            startup.creatives_urls = creatives_urls
-            startup.proofs_urls = proofs_urls
-            startup.video_urls = video_urls
+            # Сохранение списков ID в поля jsonb
+            startup.logo_urls = logo_ids
+            startup.creatives_urls = creatives_ids
+            startup.proofs_urls = proofs_ids
+            startup.video_urls = video_ids
             startup.save()
 
             # Логирование информации о файлах
@@ -417,7 +456,7 @@ def edit_startup(request, startup_id):
             
             if logo:
                 logger.info(f"Логотип: {logo.name}, размер: {logo.size} байт")
-                logger.info(f"Путь сохранения логотипа: {logo_urls[0] if logo_urls else 'Не сохранён'}")
+                logger.info(f"ID логотипа: {logo_ids[0] if logo_ids else 'Не сохранён'}")
             else:
                 logger.info("Логотип не загружен")
 
@@ -443,7 +482,7 @@ def edit_startup(request, startup_id):
 
             if video:
                 logger.info(f"Видео: {video.name}, размер: {video.size} байт")
-                logger.info(f"Путь сохранения видео: {video_urls[0] if video_urls else 'Не сохранён'}")
+                logger.info(f"ID видео: {video_ids[0] if video_ids else 'Не сохранён'}")
             else:
                 logger.info("Видео не загружено")
 

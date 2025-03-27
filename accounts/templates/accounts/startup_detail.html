@@ -1,6 +1,7 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
 {% load widget_tweaks %}
+{% load file_tags %}  <!-- Добавляем загрузку тегов -->
 
 {% block title %}{{ startup.title }} - Подробности{% endblock %}
 
@@ -29,7 +30,7 @@
                 </div>
                 <div class="logo-overlay">
                     {% if logo_urls %}
-                        <img src="{{ logo_urls.0 }}" alt="Логотип" class="logo-preview" id="logoPreview">
+                        <img src="{% get_file_url_tag logo_urls.0 startup.startup_id 'logo' %}" alt="Логотип" class="logo-preview" id="logoPreview">
                     {% else %}
                         <div class="logo-preview"></div>
                     {% endif %}
@@ -100,7 +101,7 @@
             <div class="upload-section">
                 <div class="upload-title">Креативы</div>
                 {% for url in creatives_urls %}
-                    <img src="{{ url }}" alt="Креатив" style="max-width: 200px; margin: 10px;">
+                    <img src="{% get_file_url_tag url startup.startup_id 'creative' %}" alt="Креатив" style="max-width: 200px; margin: 10px;">
                 {% empty %}
                     <p>Креативы отсутствуют.</p>
                 {% endfor %}
@@ -112,7 +113,7 @@
                 <div class="upload-title">Видео</div>
                 {% for url in video_urls %}
                     <video controls style="max-width: 400px; margin: 10px;">
-                        <source src="{{ url }}" type="video/mp4">
+                        <source src="{% get_file_url_tag url startup.startup_id 'video' %}" type="video/mp4">
                         Ваш браузер не поддерживает тег видео.
                     </video>
                 {% empty %}
@@ -167,7 +168,7 @@
         <div class="upload-section">
             <div class="upload-title">Пруфы</div>
             {% for url in proofs_urls %}
-                <a href="{{ url }}" target="_blank" style="display: block; margin: 10px;">Скачать пруф</a>
+                <a href="{% get_file_url_tag url startup.startup_id 'proof' %}" target="_blank" style="display: block; margin: 10px;">Скачать пруф</a>
             {% empty %}
                 <p>Пруфы отсутствуют.</p>
             {% endfor %}
