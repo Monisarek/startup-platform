@@ -74,7 +74,8 @@ def startups_list(request):
             startup.average_rating = 0.0
     return render(request, 'accounts/startups_list.html', {'approved_startups': approved_startups})
 
-# Детали стартапа
+# accounts/views.py (фрагмент)
+
 def startup_detail(request, startup_id):
     startup = get_object_or_404(Startups, startup_id=startup_id)
     timeline = StartupTimeline.objects.filter(startup=startup)
@@ -86,7 +87,10 @@ def startup_detail(request, startup_id):
         'proofs_urls': startup.proofs_urls or [],
         'video_urls': startup.video_urls or [],
         'timeline': timeline,
-        'average_rating': average_rating
+        'average_rating': average_rating,
+        'direction_name': startup.direction.direction_name if startup.direction else 'Не указано',
+        'stage_name': startup.stage.stage_name if startup.stage else 'Не указано',
+        'owner_email': startup.owner.email if startup.owner else 'Не указано',
     })
 
 # Страница инвестиций
@@ -117,7 +121,8 @@ def profile(request):
 
     return render(request, 'accounts/profile.html', {'user': request.user})
 
-# Создание стартапа
+# accounts/views.py (полные функции create_startup и edit_startup)
+
 @login_required
 def create_startup(request):
     if request.method == 'POST':
@@ -132,7 +137,17 @@ def create_startup(request):
                 startup.status_id = ReviewStatuses.objects.get(status_name='Pending')
             except ReviewStatuses.DoesNotExist:
                 raise ValueError("Статус 'Pending' не найден в базе данных.")
+            startup.current_step = 1  # Устанавливаем начальный этап
             startup.save()
+
+            # Создаём начальный таймлайн, если его нет
+            if not StartupTimeline.objects.filter(startup=startup).exists():
+                StartupTimeline.objects.create(
+                    startup=startup,
+                    step_number=1,
+                    title="Создание стартапа",
+                    description="Стартап создан и отправлен на модерацию."
+                )
 
             # Инициализация списков для ID файлов
             logo_ids = []
@@ -320,7 +335,6 @@ def create_startup(request):
         form = StartupForm()
     return render(request, 'accounts/create_startup.html', {'form': form})
 
-# Редактирование стартапа
 @login_required
 def edit_startup(request, startup_id):
     logger.debug(f"Request method: {request.method}")
@@ -340,7 +354,18 @@ def edit_startup(request, startup_id):
             startup.is_edited = True
             startup.updated_at = timezone.now()
             if 'current_step' in request.POST:
-                startup.current_step = int(request.POST.get('current_step'))
+                new_step = int(request.POST.get('current_step'))
+                startup.current_step = new_step
+
+                # Добавляем новый этап в таймлайн, если его нет
+                if not StartupTimeline.objects.filter(startup=startup, step_number=new_step).exists():
+                    StartupTimeline.objects.create(
+                        startup=startup,
+                        step_number=new_step,
+                        title=f"Этап {new_step}",
+                        description=f"Стартап перешёл на этап {new_step}."
+                    )
+
             startup.save()
 
             # Инициализация списков для ID (сохраняем существующие, если не загружаются новые)
