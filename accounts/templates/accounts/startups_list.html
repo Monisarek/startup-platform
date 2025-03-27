@@ -1,5 +1,4 @@
 {% load static %}
-<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -27,10 +26,6 @@
                 <img src="{% static 'accounts/images/avatar.png' %}" alt="Аватар">
             </div>
         </header>
-=======
-{% load widget_tweaks %}
-{% load file_tags %}  <!-- Добавляем загрузку тегов -->
->>>>>>> d623755f52d81725ce9c4d82d92ddca3da64e6a5
 
         <!-- Поиск -->
         <div class="search-container">
@@ -69,7 +64,6 @@
             </div>
         </aside>
 
-<<<<<<< HEAD
         <!-- Список стартапов -->
         <main class="startups-list">
             {% for startup in startups %}
@@ -80,30 +74,6 @@
                         <div>
                             <h3>{{ startup.title }}</h3>
                             <p>Категория: {{ startup.category }}</p>
-=======
-    {% if approved_startups %}
-        <div class="startup-list">
-            {% for startup in approved_startups %}
-                <div class="startup-card">
-                    <div class="form-row">
-                        <!-- Логотип -->
-                        <div class="form-column" style="flex: 0 0 200px;">
-                            <div class="planet-container">
-                                <div class="planet">
-                                    <div class="planet-segment segment-top" style="background-color: {{ startup.planet_top_color }};"></div>
-                                    <div class="planet-segment segment-middle" style="background-color: {{ startup.planet_middle_color }};"></div>
-                                    <div class="planet-segment segment-bottom" style="background-color: {{ startup.planet_bottom_color }};"></div>
-                                </div>
-                                <div class="logo-overlay">
-                                    {% if startup.logo_urls %}
-                                        <img src="{% get_file_url_tag startup.logo_urls.0 startup.startup_id 'logo' %}" alt="{{ startup.title }} логотип" class="logo-preview">
-                                    {% else %}
-                                        <div class="logo-preview"></div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="small-text" style="text-align: center;">Планета стартапа</div>
->>>>>>> d623755f52d81725ce9c4d82d92ddca3da64e6a5
                         </div>
                         <div class="rating">
                             <p>Рейтинг {{ startup.rating }}/5</p>
@@ -150,7 +120,7 @@
                 </ul>
             </div>
             <div class="copyright">
-                <p>© 2025 Great Ideas</p>
+                <p>© 2022 Great Ideas</p>
                 <p><a href="#">Политика конфиденциальности</a> | <a href="#">Офферта</a></p>
             </div>
         </footer>
