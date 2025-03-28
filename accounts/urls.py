@@ -19,10 +19,3 @@ urlpatterns = [
     path('vote/<int:startup_id>/', views.vote_startup, name='vote_startup'),
     path('startup/<int:startup_id>/edit/', views.edit_startup, name='edit_startup'),
 ]
-from django.urls import path
-from . import views
-
-urlpatterns = [
-    path('', views.startups_list, name='startups_list'),
-    path('startup/<int:startup_id>/', views.startup_detail, name='startup_detail'),
-]
