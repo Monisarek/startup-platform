@@ -647,3 +647,12 @@ def vote_startup(request, startup_id):
 
     average_rating = startup.sum_votes / startup.total_voters if startup.total_voters > 0 else 0
     return JsonResponse({'success': True, 'average_rating': average_rating})
+
+from django.shortcuts import render
+
+def startups_list(request):
+    startups = [
+        {"id": 1, "title": "Startup 1", "category": "ИИ", "description": "Описание стартапа", "rating": 4.5, "investors_count": 10, "image_url": "/static/accounts/images/startup1.jpg"},
+        # Добавьте больше стартапов
+    ]
+    return render(request, 'accounts/startups_list.html', {'startups': startups})

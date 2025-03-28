@@ -1,7 +1,6 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
 {% load widget_tweaks %}
-{% load file_tags %}  <!-- Добавляем загрузку тегов -->
 
 {% block title %}Список стартапов{% endblock %}
 
@@ -10,7 +9,7 @@
 
 <div class="startup-form-container">
     <div class="form-header">
-        <h2>Список стартапов привет</h2> 
+        <h2>Список стартапов</h2> 
     </div>
 
     {% if approved_startups %}
@@ -27,8 +26,8 @@
                                     <div class="planet-segment segment-bottom" style="background-color: {{ startup.planet_bottom_color }};"></div>
                                 </div>
                                 <div class="logo-overlay">
-                                    {% if startup.logo_urls %}
-                                        <img src="{% get_file_url_tag startup.logo_urls.0 startup.startup_id 'logo' %}" alt="{{ startup.title }} логотип" class="logo-preview">
+                                    {% if logo_urls %}
+                                        <img src="{{ startup.logo_urls.0 }}" alt="{{ startup.title }} логотип" class="logo-preview">
                                     {% else %}
                                         <div class="logo-preview"></div>
                                     {% endif %}
