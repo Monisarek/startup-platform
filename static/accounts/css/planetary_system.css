@@ -119,12 +119,17 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) rotateX(var(--ultra_new_planetary_sun_compensation));
-  width: 100px;
-  height: 100px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   overflow: hidden;
   z-index: 10;
   pointer-events: none;
+  background: radial-gradient(circle, #ffd700, #ff8c00, #ff4500);
+  box-shadow: 
+    0 0 30px rgba(255, 215, 0, 0.8),
+    0 0 60px rgba(255, 140, 0, 0.6),
+    0 0 90px rgba(255, 69, 0, 0.4);
 }
 
 #ultra_new_planetary_sun_image {
@@ -169,7 +174,7 @@
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   -moz-backface-visibility: hidden;
-  transform: rotateX(var(--ultra_new_planetary_galaxy_tilt));
+  transform: rotateX(var(--ultra_new_planetary_galaxy_tilt)) scaleX(1.2);
 }
 
 .ultra_new_planetary_orbit:nth-child(1) {
