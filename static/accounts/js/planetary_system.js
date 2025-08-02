@@ -625,13 +625,12 @@
       const progress = (elapsedSeconds % orbitTimeSeconds) / orbitTimeSeconds;
       const angle = planetObj.angle + progress * 360;
       const angleRad = angle * Math.PI / 180;
-      const radius = planetObj.orbitSize / 2;
       
-      const x = Math.cos(angleRad) * radius;
-      const y = Math.sin(angleRad) * radius;
+      const x = Math.cos(angleRad);
+      const y = Math.sin(angleRad);
       
-      const leftPercent = 50 + (x / radius) * 50;
-      const topPercent = 50 + (y / radius) * 50;
+      const leftPercent = 50 + x * 50;
+      const topPercent = 50 + y * 50;
       
       planetObj.orientation.style.left = `${leftPercent}%`;
       planetObj.orientation.style.top = `${topPercent}%`;
