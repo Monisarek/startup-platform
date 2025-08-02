@@ -119,8 +119,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) rotateX(var(--ultra_new_planetary_sun_compensation));
-  width: 97px;
-  height: 95px;
+  width: 80px;
+  height: 80px;
   z-index: 10;
   pointer-events: none;
 }

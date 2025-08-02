@@ -586,7 +586,6 @@
       const planetOrientation = planet.closest('.ultra_new_planetary_planet_orientation');
       
       if (!orbit || !planetOrientation) {
-        console.log('🔍 JS: Planet', index, 'missing orbit or orientation');
         return;
       }
       
@@ -607,11 +606,7 @@
         startTime: Date.now(),
         speedFactor: speedFactor
       });
-      
-      console.log('🔍 JS: Added planet', index, 'to animation objects');
     });
-    
-    console.log('🔍 JS: Total animation objects:', ultraNewPlanetaryObjects.length);
   }
   function updateUltraNewPlanetaryPlanetsPosition() {
     const now = Date.now();
@@ -646,8 +641,6 @@
         planet.style.zIndex = '10';
         planet.style.pointerEvents = 'auto';
       }
-      
-      console.log(`🔍 JS: Planet ${index + 1}: angle=${angle.toFixed(1)}°, x=${x.toFixed(1)}, y=${y.toFixed(1)}, radius=${radius}`);
     });
   }
   function applyUltraNewPlanetaryFilter(categoryName) {
