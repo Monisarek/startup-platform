@@ -305,24 +305,18 @@
     startUltraNewPlanetaryAnimation();
   }
   function updateUltraNewPlanetaryPlanets(startups) {
-    const planets = document.querySelectorAll('.ultra_new_planetary_planet');
+    const planets = document.querySelectorAll('.ultra_new_planetary_planet.main-page-planetary');
     
     planets.forEach(function(planet, index) {
       const startup = startups[index];
       
-      
       if (startup && (startup.id || startup.startup_id)) {
-        planet.removeAttribute('data-startup-id');
-        planet.removeAttribute('data-startup-data');
-        planet.removeAttribute('data-startup-name');
-        
         setupUltraNewPlanetaryPlanet(planet, startup, index);
-        
       } else {
         setupUltraNewPlanetaryEmptyPlanet(planet, index);
-        
       }
     });
+    
     initializeUltraNewPlanetaryObjects();
     
     stopUltraNewPlanetaryAnimation();
@@ -577,14 +571,14 @@
   });
   let ultraNewPlanetaryObjects = [];
   function initializeUltraNewPlanetaryObjects() {
-    const planets = document.querySelectorAll('.ultra_new_planetary_planet');
+    const planets = document.querySelectorAll('.ultra_new_planetary_planet.main-page-planetary');
     ultraNewPlanetaryObjects = [];
     
-    console.log('🔍 JS: Initializing', planets.length, 'planets');
+    console.log('🔍 JS: Initializing', planets.length, 'planets on main page');
     
     planets.forEach((planet, index) => {
-      const orbit = planet.closest('.ultra_new_planetary_orbit');
-      const planetOrientation = planet.closest('.ultra_new_planetary_planet_orientation');
+      const orbit = planet.closest('.ultra_new_planetary_orbit.main-page-planetary');
+      const planetOrientation = planet.closest('.ultra_new_planetary_planet_orientation.main-page-planetary');
       
       if (!orbit || !planetOrientation) {
         console.log('🔍 JS: Planet', index, 'missing orbit or orientation');
