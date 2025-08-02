@@ -71,7 +71,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
+  width: 1303px;
   height: 100%;
   perspective: 1000px;
   z-index: 3;
@@ -101,7 +101,7 @@
   height: 100%;
   transform: translate(-50%, -50%) 
              translate(var(--ultra_new_planetary_galaxy_x), var(--ultra_new_planetary_galaxy_y))
-             scale(var(--ultra_new_planetary_galaxy_scale)) 
+             scale(2.1) 
              rotateX(var(--ultra_new_planetary_galaxy_tilt));
   transform-style: preserve-3d;
   z-index: 5;

@@ -64,7 +64,7 @@
     const currentPage = getCurrentPage();
     if (currentPage === 'main') {
       ultraNewPlanetaryGalaxyY = -300;
-      ultraNewPlanetaryGalaxyScale = 0.8;
+      ultraNewPlanetaryGalaxyScale = 2.1;
       ultraNewPlanetaryGalaxyX = 500;
     } else {
       ultraNewPlanetaryGalaxyY = 0;
@@ -653,6 +653,7 @@
         planet.style.top = '50%';
         planet.style.marginLeft = `calc(-0.5 * ${planetSize}px)`;
         planet.style.marginTop = `calc(-0.5 * ${planetSize}px)`;
+        planet.style.zIndex = '10';
       }
     });
   }
