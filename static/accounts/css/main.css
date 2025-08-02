@@ -3078,15 +3078,24 @@ body > main.content::after {
 
 .main-content {
   position: relative;
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .main-text {
   position: relative;
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .main-buttons {
   position: relative;
-  z-index: 1000;
+  z-index: 9999;
+}
+
+.main-content h1,
+.main-content h2,
+.main-content h3,
+.main-content p,
+.main-content a {
+  position: relative;
+  z-index: 9999;
 }
