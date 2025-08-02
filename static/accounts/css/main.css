@@ -2965,9 +2965,10 @@ body > main.content::after {
     pointer-events: all;
     position: absolute;
     z-index: 100;
-    top: 64%;
-    left: 80.4%;
+    top: 50%;
+    left: 15%;
     transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
 }
 
 #plus-planet {
@@ -2976,11 +2977,14 @@ body > main.content::after {
     cursor: pointer;
     transition: transform 0.3s ease;
     animation: plus-planet-pulse 3s ease-in-out infinite;
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(255, 239, 43, 0.6);
 }
 
 #plus-planet:hover {
     transform: scale(1.15);
     filter: brightness(1.2) drop-shadow(0 0 20px rgba(255, 239, 43, 0.8));
+    box-shadow: 0 0 30px rgba(255, 239, 43, 0.8);
 }
 
 @keyframes plus-planet-pulse {
@@ -3037,4 +3041,37 @@ body > main.content::after {
 #plus-planet-link:hover::before {
     opacity: 1;
     visibility: visible;
+}
+
+@media (max-width: 768px) {
+  #plus-planet-link {
+    left: 20%;
+  }
+  
+  #plus-planet {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  #plus-planet-link {
+    left: 25%;
+  }
+  
+  #plus-planet {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+@media (max-width: 360px) {
+  #plus-planet-link {
+    left: 30%;
+  }
+  
+  #plus-planet {
+    width: 40px;
+    height: 40px;
+  }
 }

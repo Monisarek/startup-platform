@@ -65,9 +65,11 @@
     if (currentPage === 'main') {
       ultraNewPlanetaryGalaxyY = -200;
       ultraNewPlanetaryGalaxyScale = 0.8;
+      ultraNewPlanetaryGalaxyX = 150;
     } else {
       ultraNewPlanetaryGalaxyY = 0;
       ultraNewPlanetaryGalaxyScale = 1;
+      ultraNewPlanetaryGalaxyX = 0;
     }
     updateUltraNewPlanetaryGalaxyTransform();
   }
@@ -131,6 +133,7 @@
   function setupUltraNewPlanetaryMouseEvents() {
     const solarSystem = document.getElementById('ultra_new_planetary_solar_system');
     if (!solarSystem) return;
+    
     solarSystem.addEventListener('mousemove', function(e) {
       const rect = solarSystem.getBoundingClientRect();
       ultraNewPlanetaryMouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
@@ -147,8 +150,10 @@
         ultraNewPlanetaryLastMouseY = e.clientY;
       }
     });
+    
     solarSystem.addEventListener('mousedown', function(e) {
-      if (e.target.classList.contains('ultra_new_planetary_planet')) {
+      if (e.target.classList.contains('ultra_new_planetary_planet') || 
+          e.target.closest('.ultra_new_planetary_planet')) {
         return;
       }
       ultraNewPlanetaryIsDragging = true;
@@ -157,12 +162,14 @@
       solarSystem.style.cursor = 'grabbing';
       e.preventDefault();
     });
+    
     document.addEventListener('mouseup', function() {
       if (ultraNewPlanetaryIsDragging) {
         ultraNewPlanetaryIsDragging = false;
         solarSystem.style.cursor = 'grab';
       }
     });
+    
     solarSystem.addEventListener('wheel', function(e) {
       e.preventDefault();
       const zoomSpeed = 0.1;
@@ -171,6 +178,7 @@
       ultraNewPlanetaryGalaxyScale = Math.max(ultraNewPlanetaryMinScale, Math.min(ultraNewPlanetaryMaxScale, ultraNewPlanetaryGalaxyScale));
       updateUltraNewPlanetaryGalaxyTransform();
     });
+    
     solarSystem.addEventListener('dblclick', function(e) {
       e.preventDefault();
       resetUltraNewPlanetaryGalaxyTransform();
@@ -369,8 +377,14 @@
     const newPlanet = planet.cloneNode(true);
     planet.parentNode.replaceChild(newPlanet, planet);
     
-    newPlanet.addEventListener('click', function() {
-      showUltraNewPlanetaryModal(startup, imageUrl);
+    newPlanet.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (startup && startup.id && startup.id !== 0) {
+        showUltraNewPlanetaryModal(startup, imageUrl);
+      } else {
+        console.log('🔍 JS: Planet clicked but no startup data');
+      }
     });
     newPlanet.style.cursor = 'pointer';
     newPlanet.style.opacity = '1';
@@ -389,8 +403,13 @@
     return images[index % images.length] || '/static/accounts/images/planetary_system/planets_round/1.png';
   }
   function showUltraNewPlanetaryModal(startup, planetImageUrl) {
+    console.log('🔍 JS: Showing modal for startup:', startup);
     const modal = document.getElementById('ultra_new_planetary_modal');
-    if (!modal) return;
+    if (!modal) {
+      console.warn('🔍 JS: Modal element not found');
+      return;
+    }
+    
     const nameElement = document.getElementById('ultra_new_planetary_modal_name');
     const ratingElement = document.getElementById('ultra_new_planetary_modal_rating');
     const commentsElement = document.getElementById('ultra_new_planetary_modal_comments_count');
@@ -403,6 +422,7 @@
     const planetImageElement = document.getElementById('ultra_new_planetary_modal_planet_img');
     const detailsBtn = document.getElementById('ultra_new_planetary_modal_details_btn');
     const investmentBtn = document.getElementById('ultra_new_planetary_modal_investment_btn');
+    
     if (nameElement) nameElement.textContent = startup.name || 'Без названия';
     if (ratingElement) ratingElement.textContent = `Рейтинг ${startup.rating || '0'}/5 (${startup.voters_count || '0'})`;
     if (commentsElement) commentsElement.textContent = startup.comment_count || '0';
@@ -483,12 +503,16 @@
     }
     modal.style.display = 'block';
     document.body.style.overflow = 'hidden';
+    console.log('🔍 JS: Modal displayed successfully');
   }
   function hideUltraNewPlanetaryModal() {
     const modal = document.getElementById('ultra_new_planetary_modal');
     if (modal) {
       modal.style.display = 'none';
       document.body.style.overflow = 'auto';
+      console.log('🔍 JS: Modal hidden successfully');
+    } else {
+      console.warn('🔍 JS: Modal element not found for hiding');
     }
   }
   function toggleUltraNewPlanetaryFullscreen() {
@@ -570,6 +594,10 @@
       const orbitTime = parseFloat(orbit.style.getPropertyValue('--orbit-time')) || 80;
       const initialAngle = Math.random() * 360;
       const speedFactor = 0.8 + Math.random() * 0.4;
+      
+      const planetSize = parseFloat(planet.style.getPropertyValue('--planet-size')) || 60;
+      planet.style.setProperty('--planet-size', planetSize + 'px');
+      
       ultraNewPlanetaryObjects.push({
         element: planet,
         orientation: planetOrientation,
@@ -578,7 +606,8 @@
         orbitTime: orbitTime,
         angle: initialAngle,
         speedFactor: speedFactor,
-        startTime: Date.now() - Math.random() * orbitTime * 1000
+        startTime: Date.now() - Math.random() * orbitTime * 1000,
+        planetSize: planetSize
       });
       console.log('🔍 JS: Added planet', index, 'to animation objects');
     });
@@ -588,16 +617,26 @@
     const now = Date.now();
     ultraNewPlanetaryObjects.forEach((planetObj, index) => {
       if (!planetObj.orientation || !planetObj.element) return;
+      
       const elapsedSeconds = (now - planetObj.startTime) / 1000;
       const orbitTimeSeconds = planetObj.orbitTime * planetObj.speedFactor;
       const progress = (elapsedSeconds % orbitTimeSeconds) / orbitTimeSeconds;
       const angle = planetObj.angle + progress * 360;
       const angleRad = angle * Math.PI / 180;
       const radius = planetObj.orbitSize / 2;
+      
       const x = Math.cos(angleRad) * radius;
       const y = Math.sin(angleRad) * radius;
-      planetObj.orientation.style.left = `${50 + 50 * (x / radius)}%`;
-      planetObj.orientation.style.top = `${50 + 50 * (y / radius)}%`;
+      
+      const planetSize = planetObj.planetSize || 60;
+      const offsetX = (planetSize / 2) / radius * 100;
+      const offsetY = (planetSize / 2) / radius * 100;
+      
+      const leftPercent = 50 + 50 * (x / radius) - offsetX;
+      const topPercent = 50 + 50 * (y / radius) - offsetY;
+      
+      planetObj.orientation.style.left = `${leftPercent}%`;
+      planetObj.orientation.style.top = `${topPercent}%`;
     });
   }
   function applyUltraNewPlanetaryFilter(categoryName) {
