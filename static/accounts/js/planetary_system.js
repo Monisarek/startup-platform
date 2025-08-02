@@ -65,7 +65,7 @@
     if (currentPage === 'main') {
       ultraNewPlanetaryGalaxyY = -300;
       ultraNewPlanetaryGalaxyScale = 0.8;
-      ultraNewPlanetaryGalaxyX = 300;
+      ultraNewPlanetaryGalaxyX = 500;
     } else {
       ultraNewPlanetaryGalaxyY = 0;
       ultraNewPlanetaryGalaxyScale = 1;
@@ -599,6 +599,11 @@
       planet.style.setProperty('--planet-size', planetSize + 'px');
       
       planet.style.transform = `rotateX(var(--ultra_new_planetary_planet_compensation))`;
+      planet.style.position = 'absolute';
+      planet.style.left = '50%';
+      planet.style.top = '50%';
+      planet.style.marginLeft = `calc(-0.5 * ${planetSize}px)`;
+      planet.style.marginTop = `calc(-0.5 * ${planetSize}px)`;
       
       ultraNewPlanetaryObjects.push({
         element: planet,
@@ -643,6 +648,11 @@
       const planet = planetObj.element;
       if (planet) {
         planet.style.transform = `rotateX(var(--ultra_new_planetary_planet_compensation))`;
+        planet.style.position = 'absolute';
+        planet.style.left = '50%';
+        planet.style.top = '50%';
+        planet.style.marginLeft = `calc(-0.5 * ${planetSize}px)`;
+        planet.style.marginTop = `calc(-0.5 * ${planetSize}px)`;
       }
     });
   }

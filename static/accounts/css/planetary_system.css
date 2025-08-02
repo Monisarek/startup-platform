@@ -4,7 +4,7 @@
   --ultra_new_planetary_planet_compensation: -60deg;
   --ultra_new_planetary_sun_compensation: -60deg;
   --ultra_new_planetary_galaxy_scale: 0.7;
-  --ultra_new_planetary_galaxy_x: 300px;
+  --ultra_new_planetary_galaxy_x: 500px;
   --ultra_new_planetary_galaxy_y: -300px;
 }
 
@@ -241,62 +241,12 @@
 
 .ultra_new_planetary_planet_orientation {
   position: absolute;
-  
+  width: 100%;
+  height: 100%;
   transform-style: preserve-3d;
   will-change: left, top;
   pointer-events: none;
 }
-
-
-
-
-
-@media (max-width: 768px) {
-  .ultra_new_planetary_progress_container {
-    width: calc(var(--planet-size) * 1.2); 
-  }
-  
-  .ultra_new_planetary_progress_bar_visual {
-    height: 16px; 
-  }
-  
-  .ultra_new_planetary_progress_percentage {
-    font-size: 8px; 
-  }
-  
-  .ultra_new_planetary_progress_planets::before {
-    width: 6px;
-    height: 6px;
-    margin-top: -3px;
-  }
-  
-  .ultra_new_planetary_progress_planets::after {
-    width: 4px;
-    height: 4px;
-    margin-top: -2px;
-  }
-  
-  .ultra_new_planetary_progress_animation_container::before {
-    width: 4px;
-    height: 4px;
-    margin-top: -2px;
-  }
-}
-
-@media (max-width: 480px) {
-  .ultra_new_planetary_progress_container {
-    width: calc(var(--planet-size) * 1.3); 
-  }
-  
-  .ultra_new_planetary_progress_bar_visual {
-    height: 14px;
-  }
-  
-  .ultra_new_planetary_progress_percentage {
-    font-size: 7px;
-  }
-}
-
 
 .ultra_new_planetary_planet {
   position: absolute;
