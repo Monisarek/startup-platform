@@ -374,19 +374,24 @@
     planet.setAttribute('data-startup-name', startup.name || 'Пустая орбита');
     planet.setAttribute('data-startup-data', JSON.stringify(startup));
     
-    planet.addEventListener('click', function(e) {
+    planet.removeEventListener('click', planet._clickHandler);
+    planet._clickHandler = function(e) {
       e.preventDefault();
       e.stopPropagation();
-      console.log('🔍 JS: Planet clicked:', startup.name);
+      console.log('🔍 JS: Planet clicked:', startup.name, 'ID:', startup.id);
       if (startup && startup.id && startup.id !== 0) {
+        console.log('🔍 JS: Showing modal for startup:', startup);
         showUltraNewPlanetaryModal(startup, imageUrl);
       } else {
         console.log('🔍 JS: Planet clicked but no startup data');
       }
-    });
+    };
+    planet.addEventListener('click', planet._clickHandler);
+    
     planet.style.cursor = 'pointer';
     planet.style.opacity = '1';
     planet.style.display = 'block';
+    planet.style.pointerEvents = 'auto';
     
     console.log('🔍 JS: Planet setup complete for:', startup.name);
   }
@@ -407,6 +412,7 @@
       console.warn('🔍 JS: Modal element not found');
       return;
     }
+    console.log('🔍 JS: Modal element found:', modal);
     
     const nameElement = document.getElementById('ultra_new_planetary_modal_name');
     const ratingElement = document.getElementById('ultra_new_planetary_modal_rating');
@@ -420,6 +426,12 @@
     const planetImageElement = document.getElementById('ultra_new_planetary_modal_planet_img');
     const detailsBtn = document.getElementById('ultra_new_planetary_modal_details_btn');
     const investmentBtn = document.getElementById('ultra_new_planetary_modal_investment_btn');
+    
+    console.log('🔍 JS: Modal elements found:', {
+      nameElement: !!nameElement,
+      ratingElement: !!ratingElement,
+      planetImageElement: !!planetImageElement
+    });
     
     if (nameElement) nameElement.textContent = startup.name || 'Без названия';
     if (ratingElement) ratingElement.textContent = `Рейтинг ${startup.rating || '0'}/5 (${startup.voters_count || '0'})`;
@@ -650,6 +662,7 @@
         planet.style.marginLeft = `calc(-0.5 * ${planetSize}px)`;
         planet.style.marginTop = `calc(-0.5 * ${planetSize}px)`;
         planet.style.zIndex = '10';
+        planet.style.pointerEvents = 'auto';
       }
     });
   }
