@@ -371,12 +371,8 @@
     planet._clickHandler = function(e) {
       e.preventDefault();
       e.stopPropagation();
-      console.log('🔍 JS: Planet clicked:', startup.name, 'ID:', startup.id);
       if (startup && startup.id && startup.id !== 0) {
-        console.log('🔍 JS: Showing modal for startup:', startup);
         showUltraNewPlanetaryModal(startup, imageUrl);
-      } else {
-        console.log('🔍 JS: Planet clicked but no startup data');
       }
     };
     planet.addEventListener('click', planet._clickHandler);
@@ -399,7 +395,6 @@
     return images[index % images.length] || '/static/accounts/images/planetary_system/planets_round/1.png';
   }
   function showUltraNewPlanetaryModal(startup, planetImageUrl) {
-    console.log('🔍 JS: Showing modal for startup:', startup);
     const modal = document.getElementById('ultra_new_planetary_modal');
     if (!modal) {
 
@@ -581,11 +576,14 @@
     const planets = document.querySelectorAll('.ultra_new_planetary_planet');
     ultraNewPlanetaryObjects = [];
     
+    console.log('🔍 JS: Found', planets.length, 'planets in DOM');
+    
     planets.forEach((planet, index) => {
       const orbit = planet.closest('.ultra_new_planetary_orbit');
       const planetOrientation = planet.closest('.ultra_new_planetary_planet_orientation');
       
       if (!orbit || !planetOrientation) {
+        console.log('🔍 JS: Planet', index, 'missing orbit or orientation');
         return;
       }
       
@@ -606,7 +604,11 @@
         startTime: Date.now(),
         speedFactor: speedFactor
       });
+      
+      console.log('🔍 JS: Added planet', index, 'with orbit size:', orbitSize, 'time:', orbitTime);
     });
+    
+    console.log('🔍 JS: Total animation objects:', ultraNewPlanetaryObjects.length);
   }
   function updateUltraNewPlanetaryPlanetsPosition() {
     const now = Date.now();

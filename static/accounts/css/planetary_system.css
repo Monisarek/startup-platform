@@ -121,6 +121,7 @@
   transform: translate(-50%, -50%) rotateX(var(--ultra_new_planetary_sun_compensation));
   width: 80px;
   height: 80px;
+  border-radius: 50%;
   z-index: 10;
   pointer-events: none;
 }
@@ -128,7 +129,8 @@
 #ultra_new_planetary_sun_image {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 #ultra_new_planetary_sun_logo_container {
