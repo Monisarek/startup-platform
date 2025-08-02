@@ -73,41 +73,43 @@
     }
     updateUltraNewPlanetaryGalaxyTransform();
   }
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 JS: Planetary system initialized for main page');
-    
-    const planets = document.querySelectorAll('.ultra_new_planetary_planet.main-page-planetary');
-    const modal = document.getElementById('ultra_new_planetary_modal');
-    const modalClose = document.getElementById('ultra_new_planetary_modal_close');
-    
-    planets.forEach((planet, index) => {
-      planet.addEventListener('click', function() {
-        console.log('🔍 JS: Planet clicked:', index + 1);
-        showUltraNewPlanetaryModal(index + 1);
+      document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 JS: Planetary system initialized for main page');
+      
+      const planets = document.querySelectorAll('.ultra_new_planetary_planet.main-page-planetary');
+      const modal = document.getElementById('ultra_new_planetary_modal');
+      const modalClose = document.getElementById('ultra_new_planetary_modal_close');
+      
+      planets.forEach((planet, index) => {
+        planet.addEventListener('click', function() {
+          console.log('🔍 JS: Planet clicked:', index + 1);
+          showUltraNewPlanetaryModal(index + 1);
+        });
       });
+      
+      if (modalClose) {
+        modalClose.addEventListener('click', function() {
+          console.log('🔍 JS: Modal close clicked');
+          hideUltraNewPlanetaryModal();
+        });
+      }
+      
+      function showUltraNewPlanetaryModal(planetId) {
+        console.log('🔍 JS: Showing modal for planet:', planetId);
+        if (modal) {
+          modal.style.display = 'flex';
+        }
+      }
+      
+      function hideUltraNewPlanetaryModal() {
+        console.log('🔍 JS: Hiding modal');
+        if (modal) {
+          modal.style.display = 'none';
+        }
+      }
+      
+      initializeUltraNewPlanetarySystem();
     });
-    
-    if (modalClose) {
-      modalClose.addEventListener('click', function() {
-        console.log('🔍 JS: Modal close clicked');
-        hideUltraNewPlanetaryModal();
-      });
-    }
-    
-    function showUltraNewPlanetaryModal(planetId) {
-      console.log('🔍 JS: Showing modal for planet:', planetId);
-      if (modal) {
-        modal.style.display = 'flex';
-      }
-    }
-    
-    function hideUltraNewPlanetaryModal() {
-      console.log('🔍 JS: Hiding modal');
-      if (modal) {
-        modal.style.display = 'none';
-      }
-    }
-  });
   function initializeUltraNewPlanetarySystem() {
     try {
       loadUltraNewPlanetarySystemData();
@@ -334,26 +336,20 @@
   function loadUltraNewPlanetaryGalaxy() {
     const currentStartups = ultraNewPlanetaryStartupsData || [];
     updateUltraNewPlanetaryPlanets(currentStartups);
-    startUltraNewPlanetaryAnimation();
   }
-  function updateUltraNewPlanetaryPlanets(startups) {
-    const planets = document.querySelectorAll('.ultra_new_planetary_planet.main-page-planetary');
-    
-    planets.forEach(function(planet, index) {
-      const startup = startups[index];
+      function updateUltraNewPlanetaryPlanets(startups) {
+      const planets = document.querySelectorAll('.ultra_new_planetary_planet.main-page-planetary');
       
-      if (startup && (startup.id || startup.startup_id)) {
-        setupUltraNewPlanetaryPlanet(planet, startup, index);
-      } else {
-        setupUltraNewPlanetaryEmptyPlanet(planet, index);
-      }
-    });
-    
-    initializeUltraNewPlanetaryObjects();
-    
-    stopUltraNewPlanetaryAnimation();
-    startUltraNewPlanetaryAnimation();
-  }
+      planets.forEach(function(planet, index) {
+        const startup = startups[index];
+        
+        if (startup && (startup.id || startup.startup_id)) {
+          setupUltraNewPlanetaryPlanet(planet, startup, index);
+        } else {
+          setupUltraNewPlanetaryEmptyPlanet(planet, index);
+        }
+      });
+    }
   function clearUltraNewPlanetaryPlanetData(planet) {
 
     planet.removeAttribute('data-startup-id');
@@ -601,78 +597,11 @@
       }
     });
   });
-  let ultraNewPlanetaryObjects = [];
-  function initializeUltraNewPlanetaryObjects() {
-    const planets = document.querySelectorAll('.ultra_new_planetary_planet.main-page-planetary');
-    ultraNewPlanetaryObjects = [];
-    
-    console.log('🔍 JS: Initializing', planets.length, 'planets on main page');
-    
-    planets.forEach((planet, index) => {
-      const orbit = planet.closest('.ultra_new_planetary_orbit.main-page-planetary');
-      const planetOrientation = planet.closest('.ultra_new_planetary_planet_orientation.main-page-planetary');
-      
-      if (!orbit || !planetOrientation) {
-        console.log('🔍 JS: Planet', index, 'missing orbit or orientation');
-        return;
-      }
-      
-      const orbitSize = parseInt(getComputedStyle(orbit).getPropertyValue('--orbit-size')) || 400;
-      const orbitTime = parseInt(getComputedStyle(orbit).getPropertyValue('--orbit-time')) || 80;
-      const planetSize = parseInt(getComputedStyle(planet).getPropertyValue('--planet-size')) || 60;
-      
-      const startAngle = (index * 60) % 360;
-      const speedFactor = 1 + (index * 0.1);
-      
-      ultraNewPlanetaryObjects.push({
-        element: planet,
-        orientation: planetOrientation,
-        orbitSize: orbitSize,
-        orbitTime: orbitTime,
-        planetSize: planetSize,
-        angle: startAngle,
-        startTime: Date.now(),
-        speedFactor: speedFactor
-      });
-      
-      console.log('🔍 JS: Planet', index, 'initialized with orbit size:', orbitSize);
-    });
-    
-    console.log('🔍 JS: Total planets for animation:', ultraNewPlanetaryObjects.length);
-  }
+      function initializeUltraNewPlanetaryObjects() {
+      console.log('🔍 JS: Planets initialized statically - no animation needed');
+    }
   function updateUltraNewPlanetaryPlanetsPosition() {
-    const now = Date.now();
-    
-    ultraNewPlanetaryObjects.forEach((planetObj, index) => {
-      if (!planetObj.orientation || !planetObj.element) return;
-      
-      const elapsedSeconds = (now - planetObj.startTime) / 1000;
-      const orbitTimeSeconds = planetObj.orbitTime * planetObj.speedFactor;
-      const progress = (elapsedSeconds % orbitTimeSeconds) / orbitTimeSeconds;
-      const angle = planetObj.angle + progress * 360;
-      const angleRad = angle * Math.PI / 180;
-      
-      const x = Math.cos(angleRad);
-      const y = Math.sin(angleRad);
-      
-      const leftPercent = 50 + x * 50;
-      const topPercent = 50 + y * 50;
-      
-      planetObj.orientation.style.left = `${leftPercent}%`;
-      planetObj.orientation.style.top = `${topPercent}%`;
-      
-      const planet = planetObj.element;
-      if (planet) {
-        planet.style.transform = `rotateX(var(--ultra_new_planetary_planet_compensation))`;
-        planet.style.position = 'absolute';
-        planet.style.left = '50%';
-        planet.style.top = '50%';
-        planet.style.marginLeft = `calc(-0.5 * ${planetObj.planetSize}px)`;
-        planet.style.marginTop = `calc(-0.5 * ${planetObj.planetSize}px)`;
-        planet.style.zIndex = '10';
-        planet.style.pointerEvents = 'auto';
-      }
-    });
+    // Планеты теперь статичны как в Фигме - анимация не нужна
   }
   function applyUltraNewPlanetaryFilter(categoryName) {
 
