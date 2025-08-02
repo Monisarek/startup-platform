@@ -371,8 +371,12 @@
     planet._clickHandler = function(e) {
       e.preventDefault();
       e.stopPropagation();
+      console.log('🔍 JS: Planet clicked:', startup.name, 'ID:', startup.id);
       if (startup && startup.id && startup.id !== 0) {
+        console.log('🔍 JS: Showing modal for startup:', startup);
         showUltraNewPlanetaryModal(startup, imageUrl);
+      } else {
+        console.log('🔍 JS: Planet clicked but no startup data');
       }
     };
     planet.addEventListener('click', planet._clickHandler);
@@ -576,7 +580,7 @@
     const planets = document.querySelectorAll('.ultra_new_planetary_planet');
     ultraNewPlanetaryObjects = [];
     
-    console.log('🔍 JS: Found', planets.length, 'planets in DOM');
+    console.log('🔍 JS: Initializing', planets.length, 'planets');
     
     planets.forEach((planet, index) => {
       const orbit = planet.closest('.ultra_new_planetary_orbit');
@@ -605,10 +609,10 @@
         speedFactor: speedFactor
       });
       
-      console.log('🔍 JS: Added planet', index, 'with orbit size:', orbitSize, 'time:', orbitTime);
+      console.log('🔍 JS: Planet', index, 'initialized with orbit size:', orbitSize);
     });
     
-    console.log('🔍 JS: Total animation objects:', ultraNewPlanetaryObjects.length);
+    console.log('🔍 JS: Total planets for animation:', ultraNewPlanetaryObjects.length);
   }
   function updateUltraNewPlanetaryPlanetsPosition() {
     const now = Date.now();
