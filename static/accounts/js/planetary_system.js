@@ -337,13 +337,13 @@
   }
   function clearUltraNewPlanetaryPlanetData(planet) {
     console.log('🔍 JS: Clearing planet data');
-    const newPlanet = planet.cloneNode(true);
-    planet.parentNode.replaceChild(newPlanet, planet);
-    newPlanet.removeAttribute('data-startup-id');
-    newPlanet.removeAttribute('data-startup-data');
-    newPlanet.removeAttribute('data-startup-name');
-    newPlanet.replaceWith(newPlanet.cloneNode(true));
-    return newPlanet;
+    planet.removeAttribute('data-startup-id');
+    planet.removeAttribute('data-startup-data');
+    planet.removeAttribute('data-startup-name');
+    planet.style.display = 'none';
+    planet.style.opacity = '0';
+    planet.style.cursor = 'default';
+    return planet;
   }
   function setupUltraNewPlanetaryPlanet(planet, startup, index) {
     if (!planet || !startup) return;
@@ -374,21 +374,19 @@
     planet.setAttribute('data-startup-name', startup.name || 'Пустая орбита');
     planet.setAttribute('data-startup-data', JSON.stringify(startup));
     
-    const newPlanet = planet.cloneNode(true);
-    planet.parentNode.replaceChild(newPlanet, planet);
-    
-    newPlanet.addEventListener('click', function(e) {
+    planet.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
+      console.log('🔍 JS: Planet clicked:', startup.name);
       if (startup && startup.id && startup.id !== 0) {
         showUltraNewPlanetaryModal(startup, imageUrl);
       } else {
         console.log('🔍 JS: Planet clicked but no startup data');
       }
     });
-    newPlanet.style.cursor = 'pointer';
-    newPlanet.style.opacity = '1';
-    newPlanet.style.display = 'block';
+    planet.style.cursor = 'pointer';
+    planet.style.opacity = '1';
+    planet.style.display = 'block';
     
     console.log('🔍 JS: Planet setup complete for:', startup.name);
   }
@@ -636,11 +634,9 @@
       const y = Math.sin(angleRad) * radius;
       
       const planetSize = planetObj.planetSize || 60;
-      const offsetX = (planetSize / 2) / radius * 100;
-      const offsetY = (planetSize / 2) / radius * 100;
       
-      const leftPercent = 50 + 50 * (x / radius) - offsetX;
-      const topPercent = 50 + 50 * (y / radius) - offsetY;
+      const leftPercent = 50 + (x / radius) * 50;
+      const topPercent = 50 + (y / radius) * 50;
       
       planetObj.orientation.style.left = `${leftPercent}%`;
       planetObj.orientation.style.top = `${topPercent}%`;
