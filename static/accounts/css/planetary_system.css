@@ -1474,69 +1474,190 @@
   top: 0;
   left: 0;
   width: 1303px;
-  height: 100%;
-  perspective: 1000px;
-  z-index: 3;
-  cursor: grab;
+  height: 708px;
+  left: 71px;
+  top: 45px;
+  background: linear-gradient(180deg, #004E9F 0%, black 100%);
+  box-shadow: 6px 6px 24px -13px rgba(156.20, 156.20, 156.20, 0.25);
   overflow: hidden;
+  border-radius: 10px;
+  z-index: 3;
 }
 
 .main-page-planetary#ultra_new_planetary_galaxy {
   position: absolute;
-  top: 15%;
-  left: 50%;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  transform: translate(-50%, -50%) 
-             translate(var(--ultra_new_planetary_galaxy_x), var(--ultra_new_planetary_galaxy_y))
-             scale(2.1) 
-             rotateX(var(--ultra_new_planetary_galaxy_tilt));
-  transform-style: preserve-3d;
   z-index: 5;
-  transition: transform 0.1s ease-out;
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  -moz-backface-visibility: hidden;
-  perspective: 1000px;
-}
-
-.main-page-planetary.ultra_new_planetary_orbit {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: var(--orbit-size);
-  height: var(--orbit-size);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  margin-left: calc(-0.5 * var(--orbit-size));
-  margin-top: calc(-0.5 * var(--orbit-size));
-  transform-style: preserve-3d;
-  z-index: 5;
-  pointer-events: none;
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  -moz-backface-visibility: hidden;
-  transform: rotateX(var(--ultra_new_planetary_galaxy_tilt)) scaleX(1.2);
 }
 
 .main-page-planetary#ultra_new_planetary_sun_container {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotateX(var(--ultra_new_planetary_sun_compensation));
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
+  left: 630px;
+  top: 427px;
+  width: 173px;
+  height: 177px;
   overflow: hidden;
   z-index: 10;
-  pointer-events: none;
-  background: radial-gradient(circle, #ffd700, #ff8c00, #ff4500);
-  box-shadow: 
-    0 0 30px rgba(255, 215, 0, 0.8),
-    0 0 60px rgba(255, 140, 0, 0.6),
-    0 0 90px rgba(255, 69, 0, 0.4);
+  background: black;
+  border-radius: 50%;
+}
+
+.main-page-planetary#ultra_new_planetary_sun_image {
+  width: 172.13px;
+  height: 176.08px;
+  left: 0px;
+  top: 0px;
+  position: absolute;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Орбиты точно как в Фигме */
+.main-page-planetary.ultra_new_planetary_orbit.orbit-1 {
+  position: absolute;
+  width: 1013px;
+  height: 784px;
+  left: 639px;
+  top: -38px;
+  box-shadow: 3px 3px 3px;
+  border-radius: 9999px;
+  border: 1px white solid;
+  filter: blur(1.50px);
+  z-index: 5;
+}
+
+.main-page-planetary.ultra_new_planetary_orbit.orbit-2 {
+  position: absolute;
+  width: 1013px;
+  height: 696px;
+  left: 900px;
+  top: 5px;
+  box-shadow: 3px 3px 3px;
+  border-radius: 9999px;
+  border: 1px white solid;
+  filter: blur(1.50px);
+  z-index: 5;
+}
+
+.main-page-planetary.ultra_new_planetary_orbit.orbit-3 {
+  position: absolute;
+  width: 1013px;
+  height: 754px;
+  left: 728px;
+  top: -22px;
+  box-shadow: 3px 3px 3px;
+  border-radius: 9999px;
+  border: 1px white solid;
+  filter: blur(1.50px);
+  z-index: 5;
+}
+
+.main-page-planetary.ultra_new_planetary_orbit.orbit-4 {
+  position: absolute;
+  width: 1013px;
+  height: 651px;
+  left: 960px;
+  top: 28px;
+  box-shadow: 3px 3px 3px;
+  border-radius: 9999px;
+  border: 1px white solid;
+  filter: blur(1.50px);
+  z-index: 5;
+}
+
+.main-page-planetary.ultra_new_planetary_orbit.orbit-5 {
+  position: absolute;
+  width: 1013px;
+  height: 576px;
+  left: 1059px;
+  top: 65px;
+  box-shadow: 3px 3px 3px;
+  border-radius: 9999px;
+  border: 1px white solid;
+  filter: blur(1.50px);
+  z-index: 5;
+}
+
+/* Планеты точно как в Фигме */
+.main-page-planetary.ultra_new_planetary_planet.planet-1 {
+  position: absolute;
+  width: 90px;
+  height: 88px;
+  left: 969px;
+  top: 113px;
+  overflow: hidden;
+  background: black;
+  border-radius: 50%;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.main-page-planetary.ultra_new_planetary_planet.planet-2 {
+  position: absolute;
+  width: 193px;
+  height: 140px;
+  left: 694px;
+  top: 245px;
+  overflow: hidden;
+  background: black;
+  border-radius: 50%;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.main-page-planetary.ultra_new_planetary_planet.planet-3 {
+  position: absolute;
+  width: 121.44px;
+  height: 101.20px;
+  left: 1106px;
+  top: 47px;
+  overflow: hidden;
+  background: black;
+  border-radius: 50%;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.main-page-planetary.ultra_new_planetary_planet.planet-4 {
+  position: absolute;
+  width: 147px;
+  height: 144px;
+  left: 867px;
+  top: 372px;
+  overflow: hidden;
+  background: black;
+  border-radius: 50%;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.main-page-planetary.ultra_new_planetary_planet.planet-5 {
+  position: absolute;
+  width: 141px;
+  height: 141px;
+  left: 664px;
+  top: 72px;
+  overflow: hidden;
+  background: black;
+  border-radius: 50%;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.main-page-planetary.ultra_new_planetary_planet.planet-6 {
+  position: absolute;
+  width: 103px;
+  height: 105px;
+  left: 867px;
+  top: 589px;
+  overflow: hidden;
+  background: black;
+  border-radius: 50%;
+  z-index: 10;
+  cursor: pointer;
 }
 
 

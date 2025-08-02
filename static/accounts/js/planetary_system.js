@@ -74,7 +74,39 @@
     updateUltraNewPlanetaryGalaxyTransform();
   }
   document.addEventListener('DOMContentLoaded', function() {
-    initializeUltraNewPlanetarySystem();
+    console.log('🚀 JS: Planetary system initialized for main page');
+    
+    const planets = document.querySelectorAll('.ultra_new_planetary_planet.main-page-planetary');
+    const modal = document.getElementById('ultra_new_planetary_modal');
+    const modalClose = document.getElementById('ultra_new_planetary_modal_close');
+    
+    planets.forEach((planet, index) => {
+      planet.addEventListener('click', function() {
+        console.log('🔍 JS: Planet clicked:', index + 1);
+        showUltraNewPlanetaryModal(index + 1);
+      });
+    });
+    
+    if (modalClose) {
+      modalClose.addEventListener('click', function() {
+        console.log('🔍 JS: Modal close clicked');
+        hideUltraNewPlanetaryModal();
+      });
+    }
+    
+    function showUltraNewPlanetaryModal(planetId) {
+      console.log('🔍 JS: Showing modal for planet:', planetId);
+      if (modal) {
+        modal.style.display = 'flex';
+      }
+    }
+    
+    function hideUltraNewPlanetaryModal() {
+      console.log('🔍 JS: Hiding modal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
   });
   function initializeUltraNewPlanetarySystem() {
     try {
