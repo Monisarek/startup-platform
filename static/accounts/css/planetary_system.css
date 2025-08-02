@@ -95,7 +95,7 @@
 
 #ultra_new_planetary_galaxy {
   position: absolute;
-  top: 50%;
+  top: 15%;
   left: 50%;
   width: 100%;
   height: 100%;
@@ -114,15 +114,22 @@
 }
 
 
-#ultra_new_planetary_sun_container {
+#ultra_new_planetary_sun {
   position: absolute;
   top: 50%;
   left: 50%;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, #ffd700, #ff8c00, #ff4500);
+  border-radius: 50%;
   transform: translate(-50%, -50%) rotateX(var(--ultra_new_planetary_sun_compensation));
-  width: 97px;
-  height: 95px;
+  box-shadow: 
+    0 0 50px rgba(255, 215, 0, 0.8),
+    0 0 100px rgba(255, 140, 0, 0.6),
+    0 0 150px rgba(255, 69, 0, 0.4),
+    inset 0 0 20px rgba(255, 255, 255, 0.3);
   z-index: 10;
-  pointer-events: none;
+  animation: sun-pulse 4s ease-in-out infinite;
 }
 
 #ultra_new_planetary_sun_image {

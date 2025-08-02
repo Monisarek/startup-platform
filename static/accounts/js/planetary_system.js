@@ -580,45 +580,42 @@
   function initializeUltraNewPlanetaryObjects() {
     const planets = document.querySelectorAll('.ultra_new_planetary_planet');
     ultraNewPlanetaryObjects = [];
+    
     planets.forEach((planet, index) => {
       const orbit = planet.closest('.ultra_new_planetary_orbit');
       const planetOrientation = planet.closest('.ultra_new_planetary_planet_orientation');
+      
       if (!orbit || !planetOrientation) {
-
+        console.log('🔍 JS: Planet', index, 'missing orbit or orientation');
         return;
       }
-      const orbitSize = parseFloat(orbit.style.getPropertyValue('--orbit-size')) || 200;
-      const orbitTime = parseFloat(orbit.style.getPropertyValue('--orbit-time')) || 80;
-      const initialAngle = Math.random() * 360;
-      const speedFactor = 0.8 + Math.random() * 0.4;
       
-      const planetSize = parseFloat(planet.style.getPropertyValue('--planet-size')) || 60;
-      planet.style.setProperty('--planet-size', planetSize + 'px');
+      const orbitSize = parseInt(getComputedStyle(orbit).getPropertyValue('--orbit-size')) || 400;
+      const orbitTime = parseInt(getComputedStyle(orbit).getPropertyValue('--orbit-time')) || 80;
+      const planetSize = parseInt(getComputedStyle(planet).getPropertyValue('--planet-size')) || 60;
       
-      planet.style.transform = `rotateX(var(--ultra_new_planetary_planet_compensation))`;
-      planet.style.position = 'absolute';
-      planet.style.left = '50%';
-      planet.style.top = '50%';
-      planet.style.marginLeft = `calc(-0.5 * ${planetSize}px)`;
-      planet.style.marginTop = `calc(-0.5 * ${planetSize}px)`;
+      const startAngle = (index * 60) % 360;
+      const speedFactor = 1 + (index * 0.1);
       
       ultraNewPlanetaryObjects.push({
         element: planet,
         orientation: planetOrientation,
-        orbit: orbit,
         orbitSize: orbitSize,
         orbitTime: orbitTime,
-        angle: initialAngle,
-        speedFactor: speedFactor,
-        startTime: Date.now() - Math.random() * orbitTime * 1000,
-        planetSize: planetSize
+        planetSize: planetSize,
+        angle: startAngle,
+        startTime: Date.now(),
+        speedFactor: speedFactor
       });
       
+      console.log('🔍 JS: Added planet', index, 'to animation objects');
     });
     
+    console.log('🔍 JS: Total animation objects:', ultraNewPlanetaryObjects.length);
   }
   function updateUltraNewPlanetaryPlanetsPosition() {
     const now = Date.now();
+    
     ultraNewPlanetaryObjects.forEach((planetObj, index) => {
       if (!planetObj.orientation || !planetObj.element) return;
       
@@ -632,8 +629,6 @@
       const x = Math.cos(angleRad) * radius;
       const y = Math.sin(angleRad) * radius;
       
-      const planetSize = planetObj.planetSize || 60;
-      
       const leftPercent = 50 + (x / radius) * 50;
       const topPercent = 50 + (y / radius) * 50;
       
@@ -646,11 +641,13 @@
         planet.style.position = 'absolute';
         planet.style.left = '50%';
         planet.style.top = '50%';
-        planet.style.marginLeft = `calc(-0.5 * ${planetSize}px)`;
-        planet.style.marginTop = `calc(-0.5 * ${planetSize}px)`;
+        planet.style.marginLeft = `calc(-0.5 * ${planetObj.planetSize}px)`;
+        planet.style.marginTop = `calc(-0.5 * ${planetObj.planetSize}px)`;
         planet.style.zIndex = '10';
         planet.style.pointerEvents = 'auto';
       }
+      
+      console.log(`🔍 JS: Planet ${index + 1}: angle=${angle.toFixed(1)}°, x=${x.toFixed(1)}, y=${y.toFixed(1)}, radius=${radius}`);
     });
   }
   function applyUltraNewPlanetaryFilter(categoryName) {

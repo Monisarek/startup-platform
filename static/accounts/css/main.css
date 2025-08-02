@@ -3075,3 +3075,18 @@ body > main.content::after {
     height: 40px;
   }
 }
+
+.main-content {
+  position: relative;
+  z-index: 1000;
+}
+
+.main-text {
+  position: relative;
+  z-index: 1000;
+}
+
+.main-buttons {
+  position: relative;
+  z-index: 1000;
+}
