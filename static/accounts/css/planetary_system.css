@@ -4,8 +4,8 @@
   --ultra_new_planetary_planet_compensation: -60deg;
   --ultra_new_planetary_sun_compensation: -60deg;
   --ultra_new_planetary_galaxy_scale: 0.7;
-  --ultra_new_planetary_galaxy_x: 150px;
-  --ultra_new_planetary_galaxy_y: -200px;
+  --ultra_new_planetary_galaxy_x: 300px;
+  --ultra_new_planetary_galaxy_y: -300px;
 }
 
 
@@ -110,6 +110,7 @@
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   -moz-backface-visibility: hidden;
+  perspective: 1000px;
 }
 
 
@@ -210,6 +211,7 @@
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   -moz-backface-visibility: hidden;
+  transform: rotateX(var(--ultra_new_planetary_galaxy_tilt));
 }
 
 .ultra_new_planetary_orbit:nth-child(1) {

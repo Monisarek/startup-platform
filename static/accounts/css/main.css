@@ -2965,8 +2965,8 @@ body > main.content::after {
     pointer-events: all;
     position: absolute;
     z-index: 100;
-    top: 50%;
-    left: 15%;
+    top: 45%;
+    left: 25%;
     transform: translate(-50%, -50%);
     transition: all 0.3s ease;
 }
