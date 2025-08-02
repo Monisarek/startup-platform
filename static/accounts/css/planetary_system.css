@@ -114,90 +114,37 @@
 }
 
 
-#ultra_new_planetary_sun {
+#ultra_new_planetary_sun_container {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 80px;
-  height: 80px;
-  background: radial-gradient(circle, #ffd700, #ff8c00, #ff4500);
-  border-radius: 50%;
   transform: translate(-50%, -50%) rotateX(var(--ultra_new_planetary_sun_compensation));
-  box-shadow: 
-    0 0 30px rgba(255, 215, 0, 0.8),
-    0 0 60px rgba(255, 140, 0, 0.6),
-    0 0 90px rgba(255, 69, 0, 0.4),
-    inset 0 0 15px rgba(255, 255, 255, 0.3);
+  width: 97px;
+  height: 95px;
   z-index: 10;
-  animation: sun-pulse 4s ease-in-out infinite;
+  pointer-events: none;
 }
 
 #ultra_new_planetary_sun_image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 50% !important;
-  -webkit-border-radius: 50% !important;
-  -moz-border-radius: 50% !important;
-  background: #FAF7DB;
-  animation: ultra_new_planetary_sun_glow 3s ease-in-out infinite alternate;
-  position: relative;
-  overflow: hidden;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  -moz-backface-visibility: hidden;
-}
-
-#ultra_new_planetary_sun_image::before {
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: -10px;
-  right: -10px;
-  bottom: -10px;
-  background: #FAF7DB;
-  border-radius: 50% !important;
-  -webkit-border-radius: 50% !important;
-  -moz-border-radius: 50% !important;
-  filter: blur(12.5px);
-  box-shadow: 25px 25px 25px rgba(250, 247, 219, 0.3);
-  z-index: -1;
-  border: none !important;
-  outline: none !important;
-}
-
-@keyframes ultra_new_planetary_sun_glow {
-  0% { 
-    box-shadow: 0 0 50px rgba(250, 247, 219, 0.8), 0 0 100px rgba(255, 239, 43, 0.4);
-    border-radius: 50% !important;
-  }
-  100% { 
-    box-shadow: 0 0 80px rgba(250, 247, 219, 1), 0 0 150px rgba(255, 239, 43, 0.6);
-    border-radius: 50% !important;
-  }
+  object-fit: contain;
 }
 
 #ultra_new_planetary_sun_logo_container {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
   z-index: 11;
 }
 
 #ultra_new_planetary_sun_logo {
-  width: 60px;
-  height: auto;
-  filter: brightness(0);
-  color: #000000;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 
