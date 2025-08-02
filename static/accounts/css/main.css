@@ -2928,12 +2928,12 @@ body > main.content::after {
   right: -100px;
   top: 50%;
   transform: translateY(-50%);
-  width: 800px;
+  width: 1303px;
   height: 800px;
 }
 
 #ultra_new_planetary_galaxy {
-  transform: scale(0.8);
+  transform: scale(2.1);
   transform-origin: center center;
 }
 
