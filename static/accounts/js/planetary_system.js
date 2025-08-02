@@ -63,7 +63,7 @@
   function setInitialGalaxyPosition() {
     const currentPage = getCurrentPage();
     if (currentPage === 'main') {
-      ultraNewPlanetaryGalaxyY = -300;
+      ultraNewPlanetaryGalaxyY = -600;
       ultraNewPlanetaryGalaxyScale = 2.1;
       ultraNewPlanetaryGalaxyX = 500;
     } else {
