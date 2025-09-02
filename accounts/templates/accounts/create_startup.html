@@ -41,7 +41,7 @@
                     {% endif %}
                 </div>
                 <div class="form-group logo-upload-group">
-                    <label for="{{ form.logo.id_for_label }}" class="logo-upload-label">
+                    <label for="id_logo_input" class="logo-upload-label">
                     <div class="logo-placeholder" id="logoPlaceholder">
                         <img src="{% static 'accounts/images/icons/image_placeholder.svg' %}" alt="Upload Logo Icon">
                         <span>*Загрузить логотип</span>
@@ -354,6 +354,265 @@ document.addEventListener('DOMContentLoaded', function() {
         planetRibbon.innerHTML = '<img src="https://via.placeholder.com/150" alt="Нет планет" class="planet-ribbon-item">';
         planetInput.value = '';
     }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const logoInput = document.getElementById('id_logo_input');
+    const logoPlaceholder = document.getElementById('logoPlaceholder');
+    const logoPreview = document.getElementById('logoPreview');
+
+    function showLogoPreview(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (logoPreview) {
+                logoPreview.src = e.target.result || '';
+                logoPreview.style.display = 'block';
+            }
+            if (logoPlaceholder) {
+                logoPlaceholder.style.display = 'none';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    if (logoInput) {
+        logoInput.addEventListener('change', function() {
+            const file = this.files && this.files[0];
+            showLogoPreview(file);
+        });
+    }
+
+    function updateMicroInvestmentVisual() {
+        const microInput = document.getElementById('id_micro_investment_available');
+        const microLabel = document.querySelector('label[for="id_micro_investment_available"]');
+        if (!microInput || !microLabel) return;
+        const uncheckedVisual = microLabel.querySelector('.micro-checkbox-unchecked');
+        const checkedVisual = microLabel.querySelector('.micro-checkbox-checked');
+        if (microInput.checked) {
+            if (uncheckedVisual) uncheckedVisual.style.display = 'none';
+            if (checkedVisual) checkedVisual.style.display = 'block';
+        } else {
+            if (uncheckedVisual) uncheckedVisual.style.display = 'block';
+            if (checkedVisual) checkedVisual.style.display = 'none';
+        }
+    }
+
+    const microInputInit = document.getElementById('id_micro_investment_available');
+    if (microInputInit) {
+        updateMicroInvestmentVisual();
+        microInputInit.addEventListener('change', updateMicroInvestmentVisual);
+    }
+
+    const timelineSteps = document.querySelectorAll('.timeline-step');
+    const descriptionContainers = document.querySelectorAll('.timeline-description-container');
+    const currentStepInput = document.getElementById('step_number');
+    const setCurrentButtons = document.querySelectorAll('.btn-select-current-step');
+    const timelineProgressFilled = document.getElementById('timelineProgressFilled');
+    const totalSteps = 5;
+
+    function selectStepDescription(stepNumber) {
+        descriptionContainers.forEach(container => {
+            container.classList.toggle('active', container.dataset.stepContent == stepNumber);
+        });
+        timelineSteps.forEach(step => {
+            step.classList.toggle('active-step-display', step.dataset.step == stepNumber);
+        });
+        const activeTextarea = document.querySelector('.timeline-description-container.active textarea');
+        if (activeTextarea) activeTextarea.focus();
+    }
+
+    function setCurrentStep(stepNumber) {
+        const currentStep = parseInt(stepNumber);
+        if (currentStepInput) currentStepInput.value = currentStep;
+        timelineSteps.forEach(step => {
+            const stepNum = parseInt(step.dataset.step);
+            const stepWrapper = step.querySelector('.step-number-wrapper');
+            step.classList.remove('active-step-display');
+            if (stepWrapper) stepWrapper.classList.remove('active');
+            if (stepNum <= currentStep && stepWrapper) {
+                stepWrapper.classList.add('active');
+            }
+        });
+        if (timelineProgressFilled) {
+            if (currentStep > 1) {
+                const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+                timelineProgressFilled.style.width = `${progressPercentage}%`;
+            } else {
+                timelineProgressFilled.style.width = '0%';
+            }
+        }
+        selectStepDescription(currentStep);
+    }
+
+    timelineSteps.forEach(step => {
+        step.addEventListener('click', function() {
+            const stepNum = this.dataset.step;
+            selectStepDescription(stepNum);
+        });
+    });
+    setCurrentButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const stepNum = this.dataset.stepTarget;
+            setCurrentStep(stepNum);
+        });
+    });
+    if (timelineSteps.length > 0) {
+        setCurrentStep((currentStepInput && currentStepInput.value) || 1);
+    }
+
+    function displayFileUploadError(inputId, message) {
+        const fileInput = document.getElementById(inputId);
+        if (!fileInput) return;
+        const dropArea = fileInput.closest('.upload-box, .logo-upload-group');
+        if (!dropArea) return;
+        const existingError = dropArea.querySelector('.custom-validation-error.file-specific-upload-error');
+        if (existingError) existingError.remove();
+        const errorMsgElement = document.createElement('p');
+        errorMsgElement.className = 'error-message custom-validation-error file-specific-upload-error';
+        errorMsgElement.textContent = message;
+        const smallText = dropArea.querySelector('.small-text');
+        const uploadButton = dropArea.querySelector('.custom-file-upload-button');
+        if (smallText && smallText.nextSibling) {
+            smallText.parentNode.insertBefore(errorMsgElement, smallText.nextSibling);
+        } else if (smallText) {
+            smallText.parentNode.appendChild(errorMsgElement);
+        } else if (uploadButton && uploadButton.nextSibling) {
+            uploadButton.parentNode.insertBefore(errorMsgElement, uploadButton.nextSibling);
+        } else if (uploadButton) {
+            uploadButton.parentNode.appendChild(errorMsgElement);
+        } else {
+            dropArea.appendChild(errorMsgElement);
+        }
+        if (uploadButton) uploadButton.classList.add('input-error');
+        else dropArea.classList.add('input-error');
+        errorMsgElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function updateFileActionButtonsState(previewAreaId) {
+        const previewArea = document.getElementById(previewAreaId);
+        if (!previewArea) return;
+        const items = previewArea.querySelectorAll('.file-preview-item');
+        items.forEach(item => {
+            const editBtn = item.querySelector('.edit-file-btn');
+            if (editBtn) editBtn.style.display = 'none';
+        });
+    }
+
+    function checkPlaceholderVisibility(dropAreaId) {
+        const dropArea = document.getElementById(dropAreaId);
+        if (!dropArea) return;
+    }
+
+    function setupDragAndDrop(inputId, dropAreaId, previewAreaId, allowedTypesDetails, isMultiple, maxFiles) {
+        const dropArea = document.getElementById(dropAreaId);
+        const previewArea = document.getElementById(previewAreaId);
+        const fileInput = document.getElementById(inputId);
+        if (!dropArea || !previewArea || !fileInput) return;
+
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+        ['dragenter','dragover','dragleave','drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        dropArea.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFiles, false);
+
+        function handleDrop(e) { handleFilesList(e.dataTransfer.files); }
+        function handleFiles() { handleFilesList(fileInput.files); }
+
+        function handleFilesList(files) {
+            const filesArray = Array.from(files);
+            filesArray.forEach(file => {
+                const fileName = CSS.escape(file.name);
+                const fileType = file.type || '';
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                let isAllowed = false;
+                if (allowedTypesDetails.mimes.some(mime => fileType.startsWith(mime)) && fileType !== '') {
+                    isAllowed = true;
+                } else if (allowedTypesDetails.extensions.includes(fileExtension)) {
+                    isAllowed = true;
+                }
+                if (!isAllowed) {
+                    displayFileUploadError(inputId, `Файл "${file.name}" имеет неподдерживаемый формат.`);
+                    if (fileInput) {
+                        const dt = new DataTransfer();
+                        Array.from(fileInput.files).forEach(f => {
+                            if (f.name !== file.name || f.size !== file.size || f.lastModified !== file.lastModified) {
+                                dt.items.add(f);
+                            }
+                        });
+                        fileInput.files = dt.files;
+                    }
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const isImage = file.type.startsWith('image/');
+                    const previewSrc = isImage && e.target.result ? e.target.result : creatStartupStaticUrl + 'docimage.png';
+                    const imageClass = isImage ? 'preview-image' : 'file-icon';
+                    const deleteBtnHTML = `<button type="button" class="delete-file-btn" data-filename="${fileName}">Удалить</button>`;
+                    const previewItemHTML = `<div class="file-preview-item" data-filename="${fileName}">
+                        ${isImage ? `<img src="${previewSrc}" alt="Изображение" class="${imageClass}">` : `<img src="${previewSrc}" alt="Файл" class="${imageClass}">`}
+                        <p>${file.name}</p>
+                        ${deleteBtnHTML}
+                    </div>`;
+
+                    if (!isMultiple) {
+                        previewArea.innerHTML = previewItemHTML;
+                    } else {
+                        if (previewArea.children.length < maxFiles) {
+                            previewArea.insertAdjacentHTML('beforeend', previewItemHTML);
+                        }
+                    }
+                    updateFileActionButtonsState(previewArea.id);
+                };
+
+                if (file.type.startsWith('image/')) {
+                    reader.readAsDataURL(file);
+                } else {
+                    reader.onload({ target: { result: null } });
+                }
+            });
+
+            if (fileInput) {
+                fileInput.dataset.hadFile = previewArea.children.length > 0 ? 'true' : 'false';
+            }
+            updateFileActionButtonsState(previewAreaId);
+        }
+    }
+
+    document.addEventListener('click', function(event) {
+        const deleteButton = event.target.closest('.delete-file-btn');
+        if (deleteButton) {
+            const previewItem = deleteButton.closest('.file-preview-item');
+            if (!previewItem) return;
+            const fileNameToRemove = previewItem.dataset.filename;
+            const previewArea = previewItem.parentElement;
+            const inputId = previewArea.id.replace('Preview', '_input');
+            const fileInput = document.getElementById(inputId);
+            if (fileInput) {
+                const dt = new DataTransfer();
+                const files = Array.from(fileInput.files);
+                files.forEach(file => {
+                    if (CSS.escape(file.name) !== fileNameToRemove) {
+                        dt.items.add(file);
+                    }
+                });
+                fileInput.files = dt.files;
+            }
+            previewItem.remove();
+            checkPlaceholderVisibility(previewArea.id.replace('Preview', 'DropArea'));
+            updateFileActionButtonsState(previewArea.id);
+        }
+    });
+
+    setupDragAndDrop('id_creatives_input', 'creativesDropArea', 'creativesPreview', { mimes: ['image/jpeg', 'image/png'], extensions: ['jpg', 'jpeg', 'png'] }, true, 3);
+    setupDragAndDrop('id_video_input', 'videoDropArea', 'videoPreview', { mimes: ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'], extensions: ['mp4', 'mov', 'avi', 'mkv'] }, false, 1);
+    setupDragAndDrop('id_proofs_input', 'proofsDropArea', 'proofsPreview', { mimes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], extensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx'] }, true, 3);
 });
 </script>
 {% endblock %}
