@@ -43,8 +43,8 @@ PY
 
 python manage.py migrate --noinput
 
-echo "--- Force updating all startups to closed status ---"
-/opt/render/project/src/.venv/bin/python manage.py force_update_startups
+echo "--- Closing all startups manually ---"
+/opt/render/project/src/.venv/bin/python manage.py manual_close_startups
 
 echo "--- Collecting static files ---"
 
