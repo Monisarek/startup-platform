@@ -34,6 +34,16 @@ class Command(BaseCommand):
                 self.stdout.write(f"Закрыт: {startup.title} (ID: {startup.startup_id})")
             else:
                 self.stdout.write(f"Уже закрыт: {startup.title} (ID: {startup.startup_id})")
+        
+        # Принудительно обновляем все стартапы, даже если они уже закрыты
+        if updated_count == 0 and total_count > 0:
+            self.stdout.write("Принудительно обновляем все стартапы...")
+            for startup in startups:
+                startup.status = 'closed'
+                startup.status_id = closed_status
+                startup.save(update_fields=['status', 'status_id'])
+                updated_count += 1
+                self.stdout.write(f"Принудительно закрыт: {startup.title} (ID: {startup.startup_id})")
 
         self.stdout.write(
             self.style.SUCCESS(f"Операция завершена! Обновлено стартапов: {updated_count}")
