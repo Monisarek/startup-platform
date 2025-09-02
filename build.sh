@@ -43,9 +43,6 @@ PY
 
 python manage.py migrate --noinput
 
-echo "--- Closing all startups manually ---"
-/opt/render/project/src/.venv/bin/python manage.py manual_close_startups
-
 echo "--- Collecting static files ---"
 
 /opt/render/project/src/.venv/bin/python manage.py collectstatic --noinput --clear
